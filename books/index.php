@@ -189,19 +189,16 @@ function toggleCategoryUrl($cat) {
         /* Search Bar (sticky below the header) */
         .search-bar-wrap {
             background: var(--header-bg);
-            backdrop-filter: var(--header-blur);
-            padding: 0.85rem 1rem;
+            padding: 0.5rem 1rem;
             border-bottom: 1px solid var(--header-border);
             display: flex;
             justify-content: center;
             position: sticky;
-            top: 72px;
+            top: 56px;
             z-index: 995;
             margin: 0;
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-            border-radius: 0 0 1.5rem 1.5rem;
-            transition: transform 0.25s ease, opacity 0.25s ease, max-height 0.25s ease, padding 0.25s ease, border-bottom-width 0.25s ease;
-            max-height: 90px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 80px;
             overflow: hidden;
         }
 
@@ -217,20 +214,36 @@ function toggleCategoryUrl($cat) {
         /* Sticky Category/Filter Bar */
         .minimal-top-bar {
             background: var(--header-bg);
-            backdrop-filter: var(--header-blur);
-            padding: 0.8rem 1rem;
-            border: 1px solid var(--header-border);
-            border-radius: 1rem;
-            margin: 0.5rem auto 1.5rem;
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--header-border);
+            margin: 0;
             position: sticky;
-            top: 72px;
+            top: 104px; /* Default: Header (56) + Search (48) */
             z-index: 990;
             display: flex;
             align-items: center;
             gap: 1rem;
-            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
             overflow-x: auto;
             white-space: nowrap;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* When header is hidden, category bar sticks to top */
+        body.header-hidden .minimal-top-bar {
+            top: 0;
+            border-top: 1px solid var(--header-border);
+        }
+
+        body.header-hidden .search-bar-wrap {
+            transform: translateY(-150%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .minimal-top-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .search-row {
@@ -243,59 +256,77 @@ function toggleCategoryUrl($cat) {
 
         .youtube-search {
             display: flex;
+            align-items: center;
             width: 100%;
-            background: var(--gray-50);
-            border: 1px solid var(--gray-200);
-            border-radius: 40px;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 10px;
             overflow: hidden;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            padding: 2px 4px;
         }
 
         .youtube-search:focus-within {
-            border-color: var(--primary);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-            background: white;
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            color: var(--gray-400);
+            font-size: 1rem;
+            position: absolute;
+            left: 1.25rem;
         }
 
         .search-input {
             flex: 1;
             border: none;
             background: transparent;
-            padding: 0.6rem 1.25rem;
-            font-size: 1rem;
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            font-size: 0.95rem;
             outline: none;
             color: var(--gray-800);
+            width: 100%;
         }
 
         .search-btn {
-            background: var(--gray-100);
+            background: var(--primary);
             border: none;
-            border-left: 1px solid var(--gray-200);
-            padding: 0 1.5rem;
+            padding: 0.5rem 1.25rem;
             cursor: pointer;
-            color: var(--gray-600);
-            transition: all 0.2s;
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .search-btn:hover {
-            background: var(--gray-200);
-            color: var(--gray-900);
+            background: var(--primary-dark);
+            transform: scale(1.02);
         }
 
         /* Category Pills (YouTube Chips) */
         .category-row {
             width: 100%;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
             display: flex;
             flex-wrap: nowrap;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             padding: 0.25rem 0;
-            min-height: 48px;
+            min-height: 40px;
         }
-        .category-row::-webkit-scrollbar { display: none; }
 
         .filter-controls {
             display: flex;
@@ -353,23 +384,23 @@ function toggleCategoryUrl($cat) {
         }
 
         .chip {
-            padding: 0.4rem 1rem;
-            background: rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 20px;
-            color: var(--gray-800);
+            padding: 0.4rem 0.85rem;
+            background: #f2f2f2;
+            border: none;
+            border-radius: 6px;
+            color: #0f172a;
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.8rem;
+            font-weight: 600;
             white-space: nowrap;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
 
-        .chip:hover { background: rgba(0, 0, 0, 0.1); }
+        .chip:hover { background: #e5e5e5; }
+        
         .chip.active {
-            background: var(--gray-900);
+            background: #0f172a;
             color: white;
-            border-color: var(--gray-900);
         }
 
         .filter-controls { display: flex; gap: 0.5rem; align-items: center; }
@@ -386,72 +417,119 @@ function toggleCategoryUrl($cat) {
         .books-count { font-size: 1rem; color: var(--gray-600); }
         .books-count strong { color: var(--gray-900); font-weight: 700; font-size: 1.15rem; }
 
-        /* Book Grid (Mobile First) */
-        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+        /* Book Grid (Modern Fluid Layout) */
+        .book-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1.25rem; 
+        }
         
         .book-card {
-            background: white; border-radius: var(--radius-xl); overflow: hidden;
-            box-shadow: var(--shadow-sm); transition: var(--transition);
-            display: flex; flex-direction: column; position: relative; border: 1px solid var(--gray-100);
+            background: white; 
+            border-radius: 20px; 
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04); 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            border: none;
             /* Initial state for IntersectionObserver Animation */
-            opacity: 0; transform: translateY(30px) scale(0.95);
+            opacity: 0; 
+            transform: translateY(20px);
         }
-        .book-card.show { opacity: 1; transform: translateY(0) scale(1); }
-        .book-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-hover); border-color: #c7d2fe; z-index: 2; }
+        
+        .book-card.show { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        
+        .book-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08); 
+        }
 
         .book-cover-container { 
             position: relative; 
-            padding-top: 140%; 
+            padding: 1rem;
+            padding-top: 130%; 
             overflow: hidden; 
-            background: #f1f5f9; 
+            background: #f8fafc; 
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        
         .book-cover-container img { 
             position: absolute; 
-            top: 12px; 
-            left: 12px; 
-            right: 12px; 
-            bottom: 12px; 
-            width: calc(100% - 24px); 
-            height: calc(100% - 24px); 
+            top: 1rem; 
+            left: 1rem; 
+            right: 1rem; 
+            bottom: 1rem; 
+            width: calc(100% - 2rem); 
+            height: calc(100% - 2rem); 
             object-fit: contain; 
             transition: transform 0.6s ease; 
-            border-radius: 6px;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+            border-radius: 12px;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));
         }
         .book-card:hover .book-cover-container img { transform: scale(1.05); }
 
         .book-badge {
-            position: absolute; top: 0.75rem; right: 0.75rem; padding: 0.35rem 0.85rem;
-            border-radius: 2rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.5px; z-index: 2; backdrop-filter: blur(8px);
+            position: absolute; 
+            top: 1.25rem; 
+            right: 1.25rem; 
+            padding: 0.4rem 0.9rem;
+            border-radius: 2rem; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px; 
+            z-index: 2; 
+            backdrop-filter: blur(4px);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .badge-available { background: rgba(16, 185, 129, 0.9); color: white; box-shadow: 0 4px 10px rgba(16,185,129,0.3); }
-        .badge-borrowed { background: rgba(244, 63, 94, 0.9); color: white; box-shadow: 0 4px 10px rgba(244,63,94,0.3); }
+        .badge-available { background: rgba(39, 174, 96, 0.85); }
+        .badge-borrowed { background: rgba(231, 76, 60, 0.85); }
+        .badge-reserved { background: rgba(52, 152, 219, 0.85); }
 
         .book-info { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
         .book-category-tag {
-            font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase;
-            letter-spacing: 0.5px; margin-bottom: 0.5rem; background: rgba(99,102,241,0.1); 
-            padding: 0.25rem 0.6rem; border-radius: 4px; display: inline-block; width: fit-content;
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 1px; 
+            margin-bottom: 0.4rem; 
+            opacity: 0.7;
         }
         .book-title {
-            font-size: 1.1rem; font-weight: 800; margin-bottom: 0.4rem; line-height: 1.4;
-            color: var(--gray-900); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            margin-bottom: 0.35rem; 
+            line-height: 1.4;
+            color: var(--gray-900); 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden;
         }
         .book-title a { color: inherit; text-decoration: none; transition: color 0.2s; }
         .book-title a:hover { color: var(--primary); }
         .book-author { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 1.25rem; font-weight: 500; }
 
         .book-footer {
-            margin-top: auto; padding-top: 1rem; border-top: 1px dashed var(--gray-200);
-            display: flex; align-items: center; justify-content: space-between;
+            margin-top: auto; 
+            padding-top: 1rem; 
+            border-top: 1px solid var(--gray-100);
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
         }
-        .owner-info { display: flex; align-items: center; gap: 0.6rem; }
-        .owner-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .owner-name { font-size: 0.8rem; font-weight: 600; color: var(--gray-800); }
+        .owner-info { display: flex; align-items: center; gap: 0.75rem; }
+        .owner-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .owner-name { font-size: 0.8rem; font-weight: 600; color: var(--gray-700); }
 
         /* Empty state */
         .empty-glass {
@@ -479,38 +557,29 @@ function toggleCategoryUrl($cat) {
         @media (max-width: 639px) {
             .book-grid { 
                 grid-template-columns: repeat(2, 1fr); 
-                gap: 0.75rem; 
+                gap: 1rem; 
                 padding: 0 0.5rem;
             }
-            .book-info { padding: 0.75rem; }
-            .book-title { font-size: 0.95rem; margin-bottom: 0.25rem; }
-            .book-author { font-size: 0.75rem; margin-bottom: 0.5rem; }
-            .book-category-tag { font-size: 0.65rem; padding: 0.15rem 0.4rem; }
-            .owner-avatar { width: 24px; height: 24px; }
-            .owner-name { font-size: 0.7rem; }
-            .book-badge { top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.6rem; }
-            
-            .stat-item { padding: 0.75rem 0.5rem; }
-            .stat-value { font-size: 1.5rem; }
-            .stat-label { font-size: 0.65rem; }
+            .book-info { padding: 1rem; }
+            .book-title { font-size: 0.9rem; }
+            .owner-avatar { width: 22px; height: 22px; }
+            .book-badge { top: 0.75rem; right: 0.75rem; padding: 0.25rem 0.6rem; font-size: 0.65rem; }
         }
 
         @media (min-width: 640px) {
-            .top-bar-row { flex-direction: row; }
+            .book-grid { grid-template-columns: repeat(3, 1fr); }
             .search-bar-wrap { padding: 0.85rem 2rem; }
             .minimal-top-bar { padding: 0.5rem 2rem; }
-            
-            .search-box { max-width: 500px; }
-            
-            .filter-controls { justify-content: flex-end; }
             .styled-select { width: auto; min-width: 160px; }
-            
             .books-header { flex-direction: row; }
         }
 
         @media (min-width: 1024px) {
-            .books-hero h1 { font-size: 3.5rem; }
-            .book-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2rem; }
+            .book-grid { grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+        }
+
+        @media (min-width: 1400px) {
+            .book-grid { grid-template-columns: repeat(5, 1fr); }
         }
 
         [data-theme="dark"] .search-bar-wrap { border-bottom-color: #334155; }
@@ -519,8 +588,8 @@ function toggleCategoryUrl($cat) {
         [data-theme="dark"] .search-input { color: #f8fafc; }
         [data-theme="dark"] .search-btn { background: #1e293b; border-left-color: #334155; color: #cbd5e1; }
         [data-theme="dark"] .search-btn:hover { background: #334155; color: white; }
-        [data-theme="dark"] .chip { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
-        [data-theme="dark"] .chip:hover { background: rgba(255, 255, 255, 0.15); }
+        [data-theme="dark"] .chip { background: #334155; color: #f8fafc; }
+        [data-theme="dark"] .chip:hover { background: #475569; }
         [data-theme="dark"] .chip.active { background: #f8fafc; color: #0f172a; }
         [data-theme="dark"] .styled-select { background-color: #0f172a; border-color: #334155; color: #f8fafc; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); }
         [data-theme="dark"] .books-count { color: #cbd5e1; }
@@ -549,12 +618,15 @@ function toggleCategoryUrl($cat) {
                     <input type="hidden" name="availability" value="<?php echo htmlspecialchars($availability); ?>">
                 <?php endif; ?>
 
-                <input type="text" name="search" id="searchInput" class="search-input" 
-                       placeholder="Search books, authors, publishers, owners..." 
-                       value="<?php echo htmlspecialchars($search); ?>"
-                       autocomplete="off">
-                <button type="submit" class="search-btn" title="Search">
+                <div class="search-input-wrapper">
                     <i class="fas fa-search"></i>
+                    <input type="text" name="search" id="searchInput" class="search-input" 
+                           placeholder="Search books, authors, publishers..." 
+                           value="<?php echo htmlspecialchars($search); ?>"
+                           autocomplete="off">
+                </div>
+                <button type="submit" class="search-btn">
+                    <span>Search</span>
                 </button>
             </form>
         </div>
@@ -681,13 +753,8 @@ function toggleCategoryUrl($cat) {
                     </div>
                     
                     <div class="book-info">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <div class="book-category-tag" style="margin-bottom: 0;">
-                                <?php echo htmlspecialchars($book['category'] ?? 'General'); ?>
-                            </div>
-                            <?php if (isset($book['_match_type']) && $book['_match_type'] === 'related'): ?>
-                                <span style="font-size: 0.65rem; color: var(--gray-500); background: var(--gray-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;"><i class="fas fa-sparkles"></i> Related</span>
-                            <?php endif; ?>
+                        <div class="book-category-tag">
+                            <?php echo htmlspecialchars($book['category'] ?? 'General'); ?>
                         </div>
                         <h3 class="book-title">
                             <a href="/book/?id=<?php echo htmlspecialchars($book['id'] ?? ''); ?>">
@@ -745,7 +812,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupIntersectionObserver();
     setupInstantSearch();
     setupFilterListeners();
-    setupAutoHideSearchBar();
 });
 
 function setupFilterListeners() {
@@ -821,32 +887,7 @@ function setupFilterListeners() {
     });
 }
 
-function setupAutoHideSearchBar() {
-    const searchBar = document.querySelector('.search-bar-wrap');
-    if (!searchBar) return;
 
-    let lastScrollY = window.pageYOffset || document.documentElement.scrollTop;
-    let ticking = false;
-
-    window.addEventListener('scroll', () => {
-        if (ticking) return;
-        ticking = true;
-
-        window.requestAnimationFrame(() => {
-            const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollDelta = currentScrollY - lastScrollY;
-
-            if (scrollDelta > 20 && currentScrollY > 120) {
-                searchBar.classList.add('hidden');
-            } else if (scrollDelta < -20 || currentScrollY <= 120) {
-                searchBar.classList.remove('hidden');
-            }
-
-            lastScrollY = Math.max(currentScrollY, 0);
-            ticking = false;
-        });
-    }, { passive: true });
-}
 
 // Debounce helper to prevent excessive API calls
 function debounce(func, wait) {

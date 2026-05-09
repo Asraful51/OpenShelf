@@ -35,8 +35,7 @@ function generateUserId() {
  * Validate email against university pattern
  */
 function validateEmail($email) {
-    $pattern = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z]+\.du\.ac\.bd$/';
-    return preg_match($pattern, $email) === 1;
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
 /**
@@ -84,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (strlen($name) < 3) $errors['name'] = 'Name must be at least 3 characters';
     
     if (empty($email)) $errors['email'] = 'Email is required';
-    elseif (!validateEmail($email)) $errors['email'] = 'Email must be a valid university email';
+    elseif (!validateEmail($email)) $errors['email'] = 'Please enter a valid email address';
     
     if (empty($department)) $errors['department'] = 'Department is required';
     
@@ -702,7 +701,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-group">
                         <div class="input-group">
                             <i class="fas fa-envelope"></i>
-                            <input type="email" name="email" id="email" placeholder="University Email (@*.du.ac.bd)" 
+                            <input type="email" name="email" id="email" placeholder="Email Address" 
                                    value="<?php echo htmlspecialchars($email); ?>" required>
                         </div>
                         <?php if (isset($errors['email'])): ?>

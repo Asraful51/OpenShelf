@@ -102,11 +102,9 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
     
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="OpenShelf">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" id="themeColorMeta" content="#ffffff">
     <meta name="msapplication-TileColor" content="#6366f1">
     <meta name="msapplication-TileImage" content="/assets/images/pwa/icon-144x144.png">
     
@@ -134,10 +132,10 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         ======================================== */
         
         :root {
-            --header-bg: rgba(255, 255, 255, 0.95);
-            --header-blur: blur(10px);
-            --header-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            --header-border: rgba(226, 232, 240, 0.5);
+            --header-bg: #ffffff;
+            --header-blur: none;
+            --header-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --header-border: #f1f5f9;
             --nav-link-color: #334155;
             --nav-link-hover: #6366f1;
             --nav-link-active: #6366f1;
@@ -147,12 +145,13 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
             --border: #e2e8f0;
             --surface-hover: #f8fafc;
             --primary: #6366f1;
+            --primary-soft: rgba(99, 102, 241, 0.08);
         }
 
         :root[data-theme="dark"] {
-            --header-bg: rgba(15, 23, 42, 0.95);
+            --header-bg: #0f172a;
             --header-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --header-border: rgba(51, 65, 85, 0.5);
+            --header-border: #1e293b;
             --nav-link-color: #cbd5e1;
             --nav-link-hover: #818cf8;
             --nav-link-active: #818cf8;
@@ -162,6 +161,7 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
             --border: #334155;
             --surface-hover: #1e293b;
             --primary: #818cf8;
+            --primary-soft: rgba(129, 140, 248, 0.1);
         }
 
         [data-theme="dark"] body {
@@ -198,30 +198,34 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         body {
             font-family: system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif;
             background: #f8fafc;
-            padding-top: 0;
+            padding-top: 100px;
         }
 
-        /* Header Container */
         .site-header {
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 1000;
+            left: 0;
+            right: 0;
+            z-index: 1100;
             background: var(--header-bg);
-            backdrop-filter: var(--header-blur);
             border-bottom: 1px solid var(--header-border);
-            box-shadow: var(--header-shadow);
-            transition: all 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
+            height: 56px;
+            display: flex;
+            align-items: center;
+        }
+
+        .site-header.nav-up {
+            transform: translateY(-100%);
         }
 
         .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0.75rem 2rem;
+            width: 100%;
+            padding: 0 1rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
         }
 
         /* Logo */
@@ -237,7 +241,7 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         }
 
         .logo img {
-            height: 40px;
+            height: 32px;
             width: auto;
             display: block;
         }
@@ -250,29 +254,33 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         }
 
         .nav-link {
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            font-size: 0.95rem;
+            padding: 0.5rem 0.85rem;
+            font-weight: 600;
+            font-size: 0.85rem;
             color: var(--nav-link-color);
             text-decoration: none;
             border-radius: 2rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
         }
 
         .nav-link i {
-            margin-right: 0.5rem;
-            font-size: 0.9rem;
+            margin-right: 0.4rem;
+            font-size: 0.85rem;
+            opacity: 0.8;
         }
 
         .nav-link:hover {
             color: var(--nav-link-hover);
-            background: rgba(99, 102, 241, 0.08);
+            background: var(--primary-soft);
+            transform: translateY(-1px);
         }
 
         .nav-link.active {
             color: var(--nav-link-active);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
-            font-weight: 600;
+            background: var(--primary-soft);
+            box-shadow: inset 0 0 0 1px var(--header-border);
         }
 
         /* Notification Bell */
@@ -349,8 +357,8 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         }
 
         .user-name {
-            font-weight: 500;
-            font-size: 0.9rem;
+            font-weight: 600;
+            font-size: 0.85rem;
             color: var(--text-primary);
             display: none;
         }
@@ -476,10 +484,10 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
 
         .menu-toggle span {
             width: 100%;
-            height: 2.5px;
+            height: 2px;
             background: var(--text-primary);
-            border-radius: 2px;
-            transition: all 0.2s ease;
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
 
         .menu-toggle.active span:nth-child(1) {
@@ -502,13 +510,14 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
             width: 85%;
             max-width: 320px;
             height: 100vh;
-            background: white;
+            background: var(--header-bg);
             box-shadow: 20px 0 40px rgba(0, 0, 0, 0.1);
             transition: left 0.3s ease;
-            z-index: 1000;
+            z-index: 1200; /* Higher than header */
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .mobile-menu.active {
@@ -642,14 +651,10 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
             visibility: visible;
         }
 
-        /* Desktop Styles - SHOW THE THREE LINES ON MOBILE ONLY */
+        /* Desktop Styles */
         @media (min-width: 768px) {
             .nav-desktop {
                 display: flex;
-            }
-            
-            .menu-toggle {
-                display: none !important;
             }
             
             .user-name {
@@ -657,15 +662,15 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
             }
             
             .header-container {
-                padding: 0.75rem 2rem;
+                padding: 0 1.5rem;
+            }
+
+            .site-header {
+                height: 70px;
             }
         }
 
         @media (max-width: 768px) {
-            .header-container {
-                padding: 0.75rem 1rem;
-            }
-            
             .auth-buttons {
                 display: none;
             }
@@ -674,10 +679,15 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
                 display: none;
             }
             
-            /* Ensure three lines are visible on mobile */
-            .menu-toggle {
-                display: flex !important;
+            .nav-desktop {
+                display: none;
             }
+        }
+
+        /* Hamburger menu always visible */
+        .menu-toggle {
+            display: flex !important;
+            margin-left: 0.5rem;
         }
 
         /* Animation */
@@ -966,18 +976,65 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
         }
     });
 
+    // Smart Scroll-to-Reveal Header
+    let lastScrollTop = 0;
+    const header = document.querySelector('.site-header');
+    const scrollDelta = 5;
+    const headerHeight = header.offsetHeight;
+
+    window.addEventListener('scroll', () => {
+        let st = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Scroll effect (shrink)
+        if (st > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+
+        // Hide/Show on scroll
+        if (Math.abs(lastScrollTop - st) <= scrollDelta) return;
+
+        if (st > lastScrollTop && st > headerHeight) {
+            // Scroll Down - Hide Header
+            header.classList.add('nav-up');
+            document.body.classList.add('header-hidden');
+        } else {
+            // Scroll Up - Show Header
+            if (st + window.innerHeight < document.documentElement.scrollHeight) {
+                header.classList.remove('nav-up');
+                document.body.classList.remove('header-hidden');
+            }
+        }
+        
+        lastScrollTop = st;
+    });
+
     // Theme Toggle
     const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeColorMeta = document.getElementById('themeColorMeta');
+    
+    function updateThemeMeta(theme) {
+        if (themeColorMeta) {
+            themeColorMeta.setAttribute('content', theme === 'dark' ? '#0f172a' : '#ffffff');
+        }
+    }
+
     if (themeToggleBtn) {
-        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        updateThemeMeta(currentTheme);
+        
+        if (currentTheme === 'dark') {
             themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
         }
+        
         themeToggleBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const theme = document.documentElement.getAttribute('data-theme');
+            const newTheme = theme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             themeToggleBtn.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            updateThemeMeta(newTheme);
         });
     }
 </script>
