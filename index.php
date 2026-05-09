@@ -407,7 +407,7 @@ include 'includes/header.php';
             <div class="step-item">
                 <div class="step-number">1</div>
                 <h4>Sign Up</h4>
-                <p>Register with your university email to join your local campus hub.</p>
+                <p>Register with your email to join your local campus hub.</p>
             </div>
             <div class="step-item">
                 <div class="step-number">2</div>

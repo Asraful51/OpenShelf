@@ -136,7 +136,7 @@ include 'includes/header.php';
             <h2><i class="fas fa-database"></i> 1. Data Collection</h2>
             <p>We collect only what is necessary to run the platform:</p>
             <ul>
-                <li>Your university email for verification.</li>
+                <li>Your email for verification.</li>
                 <li>Your name and department for your public profile.</li>
                 <li>Your phone number (visible only to people you are actively borrowing from or lending to).</li>
             </ul>
