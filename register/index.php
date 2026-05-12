@@ -61,7 +61,7 @@ function isPhoneExists($phone) {
 }
 
 // Initialize variables
-$name = $email = $department = $session = $phone = $roomNumber = '';
+$name = $email = $department = $session = $phone = $roomNumber = $hall = '';
 $errors = [];
 $success = false;
 
