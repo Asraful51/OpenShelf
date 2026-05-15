@@ -881,33 +881,27 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
     
     <nav class="mobile-nav">
         <ul style="list-style: none;">
-            <!-- Explore Section -->
-            <li class="mobile-nav-section-label">Explore</li>
-            <li class="mobile-nav-item">
-                <a href="/" class="mobile-nav-link <?php echo $currentPage === 'index.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-home"></i> Home
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="/books/" class="mobile-nav-link <?php echo strpos($currentPath, '/books/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-book"></i> Books
-                </a>
-            </li>
+            <!-- General Section -->
+            <li class="mobile-nav-section-label">General</li>
             <li class="mobile-nav-item">
                 <a href="/feed/" class="mobile-nav-link <?php echo strpos($currentPath, '/feed/') !== false ? 'active' : ''; ?>">
                     <i class="fas fa-rss"></i> Feed
                 </a>
             </li>
-            <!-- Support Us - Always Visible -->
             <li class="mobile-nav-item">
-                <a href="/support_us/" class="mobile-nav-link mobile-support-link <?php echo strpos($currentPath, '/support_us/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-heart"></i> Support Us
+                <a href="/announcements/" class="mobile-nav-link <?php echo strpos($currentPath, '/announcements/') !== false ? 'active' : ''; ?>">
+                    <i class="fas fa-bullhorn"></i> Announcements
                 </a>
             </li>
             <?php if ($isLoggedIn): ?>
-            <!-- Account Section -->
+            <!-- Management Section -->
             <div class="mobile-divider"></div>
-            <li class="mobile-nav-section-label">My Account</li>
+            <li class="mobile-nav-section-label">Management</li>
+            <li class="mobile-nav-item">
+                <a href="/my-borrowed/" class="mobile-nav-link <?php echo strpos($currentPath, '/my-borrowed/') !== false ? 'active' : ''; ?>">
+                    <i class="fas fa-book-reader"></i> My Borrowed
+                </a>
+            </li>
             <li class="mobile-nav-item">
                 <a href="/notifications/" class="mobile-nav-link <?php echo strpos($currentPath, '/notifications/') !== false ? 'active' : ''; ?>">
                     <i class="fas fa-bell"></i> Notifications
@@ -917,35 +911,25 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
                 </a>
             </li>
             <li class="mobile-nav-item">
-                <a href="/profile/" class="mobile-nav-link <?php echo strpos($currentPath, '/profile/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-user"></i> My Profile
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="/my-borrowed/" class="mobile-nav-link <?php echo strpos($currentPath, '/my-borrowed/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-book-reader"></i> My Borrowed
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="/announcements/" class="mobile-nav-link <?php echo strpos($currentPath, '/announcements/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-bullhorn"></i> Announcements
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="/add-book/" class="mobile-nav-link <?php echo strpos($currentPath, '/add-book/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-plus-circle"></i> Add Book
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="/requests/" class="mobile-nav-link <?php echo strpos($currentPath, '/requests/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-exchange-alt"></i> My Requests
-                </a>
-            </li>
-            <li class="mobile-nav-item">
                 <a href="/edit-profile/" class="mobile-nav-link <?php echo strpos($currentPath, '/edit-profile/') !== false ? 'active' : ''; ?>">
                     <i class="fas fa-cog"></i> Settings
                 </a>
             </li>
+            <?php endif; ?>
+            <!-- Support Section -->
+            <div class="mobile-divider"></div>
+            <li class="mobile-nav-section-label">Support</li>
+            <li class="mobile-nav-item">
+                <a href="/faq.php" class="mobile-nav-link <?php echo $currentPage === 'faq.php' ? 'active' : ''; ?>">
+                    <i class="fas fa-question-circle"></i> FAQ
+                </a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="/support_us/" class="mobile-nav-link mobile-support-link <?php echo strpos($currentPath, '/support_us/') !== false ? 'active' : ''; ?>">
+                    <i class="fas fa-heart"></i> Support Us
+                </a>
+            </li>
+            <?php if ($isLoggedIn): ?>
             <div class="mobile-divider"></div>
             <li class="mobile-nav-item">
                 <a href="/logout.php" class="mobile-nav-link mobile-logout-link">
@@ -959,7 +943,6 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
                     <i class="fas fa-download"></i> Install App
                 </a>
             </li>
-
         </ul>
     </nav>
 </div>
