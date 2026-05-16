@@ -32,7 +32,7 @@ try {
     }
 
     $sql = "
-        SELECT b.*, u.name as owner_name, u.profile_pic as owner_avatar
+        SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall
         FROM books b 
         LEFT JOIN users u ON b.owner_id = u.id 
         WHERE " . implode(' AND ', $where) . "
