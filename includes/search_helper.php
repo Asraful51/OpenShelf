@@ -111,7 +111,7 @@ function getRelatedBooksForSearch($db, $search, $excludeIds = [], $limit = 6) {
     
     if (!empty($ownerIds)) {
         $placeholders = implode(',', array_fill(0, count($ownerIds), '?'));
-        $sql = "SELECT b.*, u.name as owner_name, u.profile_pic as owner_avatar 
+        $sql = "SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall 
                 FROM books b 
                 LEFT JOIN users u ON b.owner_id = u.id 
                 WHERE b.owner_id IN ($placeholders) AND b.status = 'available' $excludeIdsStr
@@ -139,7 +139,7 @@ function getRelatedBooksForSearch($db, $search, $excludeIds = [], $limit = 6) {
         $excludeNowStr = !empty($excludeNow) ? "AND b.id NOT IN (" . implode(',', array_map(fn($id) => $db->quote($id), $excludeNow)) . ")" : "";
         
         $placeholders = implode(',', array_fill(0, count($allCats), '?'));
-        $sql = "SELECT b.*, u.name as owner_name, u.profile_pic as owner_avatar 
+        $sql = "SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall 
                 FROM books b 
                 LEFT JOIN users u ON b.owner_id = u.id 
                 WHERE b.category IN ($placeholders) AND b.status = 'available' $excludeNowStr
@@ -156,7 +156,7 @@ function getRelatedBooksForSearch($db, $search, $excludeIds = [], $limit = 6) {
         $excludeNow = array_merge($excludeIds, array_column($related, 'id'));
         $excludeNowStr = !empty($excludeNow) ? "AND b.id NOT IN (" . implode(',', array_map(fn($id) => $db->quote($id), $excludeNow)) . ")" : "";
         
-        $sql = "SELECT b.*, u.name as owner_name, u.profile_pic as owner_avatar 
+        $sql = "SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall 
                 FROM books b 
                 LEFT JOIN users u ON b.owner_id = u.id 
                 WHERE b.publisher LIKE ? AND b.status = 'available' $excludeNowStr
@@ -173,7 +173,7 @@ function getRelatedBooksForSearch($db, $search, $excludeIds = [], $limit = 6) {
         $excludeNow = array_merge($excludeIds, array_column($related, 'id'));
         $excludeNowStr = !empty($excludeNow) ? "AND b.id NOT IN (" . implode(',', array_map(fn($id) => $db->quote($id), $excludeNow)) . ")" : "";
         
-        $sql = "SELECT b.*, u.name as owner_name, u.profile_pic as owner_avatar 
+        $sql = "SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall 
                 FROM books b 
                 LEFT JOIN users u ON b.owner_id = u.id 
                 WHERE b.status = 'available' $excludeNowStr
