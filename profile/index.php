@@ -289,13 +289,13 @@ $showSensitiveInfo = $isOwnProfile; // Only owner can see sensitive info like ro
         <div class="profile-actions-wrapper">
             <?php if ($isOwnProfile): ?>
                 <!-- Settings gear icon centered below grid -->
-                <a href="/edit-profile/" class="settings-gear-btn" title="Edit Settings">
+                <a href="/settings/" class="settings-gear-btn" title="Edit Settings">
                     <i class="fas fa-cog"></i>
                 </a>
                 
                 <!-- Side by side action buttons -->
                 <div class="action-buttons-row">
-                    <a href="/edit-profile/" class="btn btn-profile-action edit-btn">
+                    <a href="/settings/" class="btn btn-profile-action edit-btn">
                         <i class="fas fa-edit"></i> Edit Profile
                     </a>
                     <a href="/add-book/" class="btn btn-profile-action add-btn">
