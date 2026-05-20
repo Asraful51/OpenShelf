@@ -15,25 +15,31 @@ define('DATA_PATH', dirname(__DIR__) . '/data/');
 /**
  * Load books from DB with cursor-based pagination
  */
-function getBooks($search = '', $selectedCategories = [], $availability = '', $hall = '', $limit = 25, $cursor_date = null, $cursor_id = null) {
+function getBooks($search = '', $selectedCategories = [], $availability = '', $hall = '', $limit = 25, $cursor_date = null, $cursor_id = null, $sort = 'newest') {
     try {
         $db = getDB();
         list($where, $params) = prepareBookQuery($search, $selectedCategories, $availability, $hall);
 
 
         if ($cursor_date && $cursor_id) {
-            $where[] = "(b.created_at < :c_date1 OR (b.created_at = :c_date2 AND b.id < :c_id))";
+            if ($sort === 'oldest') {
+                $where[] = "(b.created_at > :c_date1 OR (b.created_at = :c_date2 AND b.id > :c_id))";
+            } else {
+                $where[] = "(b.created_at < :c_date1 OR (b.created_at = :c_date2 AND b.id < :c_id))";
+            }
             $params[':c_date1'] = $cursor_date;
             $params[':c_date2'] = $cursor_date;
             $params[':c_id'] = $cursor_id;
         }
+
+        $orderClause = ($sort === 'oldest') ? "ORDER BY b.created_at ASC, b.id ASC" : "ORDER BY b.created_at DESC, b.id DESC";
 
         $sql = "
             SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, b.hall, u.name as owner_name, u.profile_pic as owner_avatar, u.hall as owner_hall
             FROM books b 
             LEFT JOIN users u ON b.owner_id = u.id 
             WHERE " . implode(' AND ', $where) . "
-            ORDER BY b.created_at DESC, b.id DESC
+            $orderClause
             LIMIT :limit
         ";
 
@@ -51,23 +57,7 @@ function getBooks($search = '', $selectedCategories = [], $availability = '', $h
     }
 }
 
-/**
- * Get total books count for current filters
- */
-function getBooksCount($search = '', $selectedCategories = [], $availability = '', $hall = '') {
-    try {
-        $db = getDB();
-        list($where, $params) = prepareBookQuery($search, $selectedCategories, $availability, $hall);
 
-        $sql = "SELECT COUNT(*) FROM books b WHERE " . implode(' AND ', $where);
-        $stmt = $db->prepare($sql);
-        $stmt->execute($params);
-        return (int)$stmt->fetchColumn();
-    } catch (PDOException $e) {
-        error_log("Database Error in getBooksCount: " . $e->getMessage());
-        return 0;
-    }
-}
 
 /**
  * Get unique categories from DB
@@ -83,9 +73,10 @@ $search = $_GET['search'] ?? '';
 $selectedCategories = isset($_GET['categories']) ? (array)$_GET['categories'] : [];
 $availability = $_GET['availability'] ?? '';
 $hallFilter = $_GET['hall'] ?? '';
+$sortParam = $_GET['sort'] ?? 'newest';
 $limit = 25;
 
-$filteredBooks = getBooks($search, $selectedCategories, $availability, $hallFilter, $limit);
+$filteredBooks = getBooks($search, $selectedCategories, $availability, $hallFilter, $limit, null, null, $sortParam);
 
 // Suggest related books if results are few
 if (!empty($search) && count($filteredBooks) < 4) {
@@ -95,7 +86,7 @@ if (!empty($search) && count($filteredBooks) < 4) {
     $filteredBooks = array_merge($filteredBooks, $related);
 }
 
-$totalFilteredCount = getBooksCount($search, $selectedCategories, $availability, $hallFilter);
+
 $categories = getCategoriesFromDB();
 
 // Get last book info for initial cursor
@@ -303,19 +294,179 @@ function toggleCategoryUrl($cat) {
             color: white;
         }
 
-        .filter-controls { display: flex; gap: 0.5rem; align-items: center; }
-        .styled-select {
-            padding: 0.5rem 2rem 0.5rem 0.75rem; border: 1px solid var(--gray-200); border-radius: 8px;
-            background: var(--gray-50); font-size: 0.85rem; font-weight: 600; color: var(--gray-700);
-            cursor: pointer; transition: all 0.3s ease; outline: none; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 0.5rem center;
+        /* Filter-by label in category bar */
+        .filter-by-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--gray-600);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        .styled-select:focus { background-color: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
 
-        .books-header { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
-        .books-count { font-size: 1rem; color: var(--gray-600); }
-        .books-count strong { color: var(--gray-900); font-weight: 700; font-size: 1.15rem; }
+        /* Books header: sort + filter in one row */
+        .books-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 3rem;
+            margin-bottom: 1.25rem;
+            width: 100%;
+        }
+        .sort-controls {
+            flex: 1;
+            min-width: 0;
+        }
+        .filter-wrapper {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        /* Styled select for sort */
+        .styled-select {
+            width: 100%;
+            padding: 0.6rem 2.2rem 0.6rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            background: var(--gray-50);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            outline: none;
+            appearance: none;
+            box-sizing: border-box;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+        }
+        .styled-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(44,62,80,0.1); }
+
+        /* Filters button */
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            background: var(--gray-50);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: white;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .filter-btn i { font-size: 0.85rem; }
+
+        /* Filter dropdown panel */
+        .filter-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 280px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+            padding: 1.25rem;
+            z-index: 1000;
+            animation: panelSlideIn 0.18s ease;
+        }
+        .filter-panel.show { display: block; }
+        @keyframes panelSlideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .filter-panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        .filter-section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+        .filter-radio-group, .filter-check-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+        .filter-option input { accent-color: var(--primary); cursor: pointer; }
+        .filter-panel-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+        .btn-apply-filters {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .btn-apply-filters:hover { background: var(--primary-dark); }
+        .btn-cancel-filters {
+            width: 100%;
+            padding: 0.65rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-cancel-filters:hover { background: var(--gray-200); }
+
+        /* Dark mode support */
+        [data-theme="dark"] .filter-panel {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        [data-theme="dark"] .styled-select,
+        [data-theme="dark"] .filter-btn {
+            background: #1e293b;
+            border-color: #334155;
+            color: #cbd5e1;
+        }
+
 
         [data-theme="dark"] .empty-glass { background: #1e293b; border-color: #334155; }
         [data-theme="dark"] .empty-glass h3 { color: #f8fafc; }
@@ -324,6 +475,7 @@ function toggleCategoryUrl($cat) {
     <div class="books-main">
     <!-- Sticky Category / Filter Bar -->
     <div class="minimal-top-bar">
+        <span class="filter-by-label">Filter by</span>
         <!-- Category Row -->
         <div class="category-row">
             <a href="<?php echo getUrlWithParam('categories', ''); ?>" 
@@ -340,67 +492,73 @@ function toggleCategoryUrl($cat) {
                    <?php echo htmlspecialchars($cat); ?>
                 </a>
             <?php endforeach; ?>
-            
-            <div class="filter-controls" style="margin-left: auto; padding-left: 1rem; border-left: 1px solid var(--gray-200);">
-                <form method="GET" action="/books/" style="display: flex; gap: 0.5rem;">
-                    <!-- Preserve search and categories -->
-                    <?php if (!empty($search)): ?>
-                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
-                    <?php endif; ?>
-                    <?php if (!empty($selectedCategories)): ?>
-                        <?php foreach ($selectedCategories as $cat): ?>
-                            <input type="hidden" name="categories[]" value="<?php echo htmlspecialchars($cat); ?>">
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-
-                    <div class="radio-group">
-                        <label class="radio-item">
-                            <input type="radio" name="availability" value="" class="availability-radio" <?php echo empty($availability) ? 'checked' : ''; ?>>
-                            <span>All</span>
-                        </label>
-                        <label class="radio-item">
-                            <input type="radio" name="availability" value="available" class="availability-radio" <?php echo $availability === 'available' ? 'checked' : ''; ?>>
-                            <span>Available</span>
-                        </label>
-                        <label class="radio-item">
-                            <input type="radio" name="availability" value="borrowed" class="availability-radio" <?php echo $availability === 'borrowed' ? 'checked' : ''; ?>>
-                            <span>Borrowed</span>
-                        </label>
-                    </div>
-
-                    <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_hall'])): ?>
-                        <div style="width: 1px; height: 24px; background: var(--gray-200); margin: 0 0.5rem;"></div>
-                        <div class="radio-group">
-                            <label class="radio-item" title="<?php echo htmlspecialchars(getHallName($_SESSION['user_hall'])); ?>">
-                                <input type="checkbox" name="hall" value="<?php echo htmlspecialchars($_SESSION['user_hall']); ?>" class="hall-checkbox" <?php echo $hallFilter === $_SESSION['user_hall'] ? 'checked' : ''; ?>>
-                                <span style="font-weight: 700; color: var(--primary);">My Hall</span>
-                            </label>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($search) || !empty($selectedCategories) || !empty($availability) || !empty($hallFilter)): ?>
-                        <a href="#" class="btn-clear" id="clearFiltersBtn" title="Clear all filters">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    <?php endif; ?>
-                </form>
-            </div>
         </div>
     </div>
-    
+
+    <?php $hasFilters = !empty($search) || !empty($selectedCategories) || !empty($availability) || !empty($hallFilter); ?>
     <div class="books-header">
-        <div class="books-count" id="booksCountLabel">
-            Showing <strong><?php echo count($filteredBooks); ?></strong> of <strong><?php echo $totalFilteredCount; ?></strong> books 
-            <?php if (!empty($selectedCategories)): ?>
-                in <span style="color:var(--primary)"><?php echo implode(', ', array_map('htmlspecialchars', $selectedCategories)); ?></span>
-            <?php endif; ?>
-        </div>
-        <div>
-            <select class="styled-select" onchange="sortBooks(this.value)" style="padding: 0.6rem 2.5rem 0.6rem 1rem; width: auto; font-size: 0.9rem;">
-                <option value="newest">Sort: Newest First</option>
-                <option value="title">Sort: Title A-Z</option>
-                <option value="author">Sort: Author A-Z</option>
+        <!-- Sort dropdown (left) -->
+        <div class="sort-controls">
+            <select class="styled-select" id="sortSelect" onchange="sortBooks(this.value)">
+                <option value="newest" <?php echo ($sortParam === 'newest') ? 'selected' : ''; ?>>Sort: Newest First</option>
+                <option value="oldest" <?php echo ($sortParam === 'oldest') ? 'selected' : ''; ?>>Sort: Oldest First</option>
+                <option value="title" <?php echo ($sortParam === 'title') ? 'selected' : ''; ?>>Sort: Title A-Z</option>
+                <option value="author" <?php echo ($sortParam === 'author') ? 'selected' : ''; ?>>Sort: Author A-Z</option>
             </select>
+        </div>
+
+        <!-- Filters button + panel (right) -->
+        <div class="filter-wrapper">
+            <button class="filter-btn <?php echo ($hasFilters && (!empty($availability) || !empty($hallFilter))) ? 'active' : ''; ?>" id="filtersToggleBtn">
+                <span>Filters</span>
+                <i class="fas fa-sliders-h"></i>
+            </button>
+
+            <?php if ($hasFilters): ?>
+            <a href="#" class="btn-clear" id="clearFiltersBtn" title="Clear all filters" style="flex-shrink:0;">
+                <i class="fas fa-times"></i>
+            </a>
+            <?php else: ?>
+            <a href="#" class="btn-clear" id="clearFiltersBtn" title="Clear all filters" style="display:none; flex-shrink:0;">
+                <i class="fas fa-times"></i>
+            </a>
+            <?php endif; ?>
+
+            <!-- Filter dropdown panel -->
+            <div class="filter-panel" id="filterPanel">
+                <div class="filter-panel-title">Status Filters</div>
+
+                <div class="filter-section-label">Status</div>
+                <div class="filter-radio-group">
+                    <label class="filter-option">
+                        <input type="radio" name="filterStatus" value="" <?php echo empty($availability) ? 'checked' : ''; ?>>
+                        All
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="filterStatus" value="available" <?php echo $availability === 'available' ? 'checked' : ''; ?>>
+                        Available
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="filterStatus" value="borrowed" <?php echo $availability === 'borrowed' ? 'checked' : ''; ?>>
+                        Borrowed
+                    </label>
+                </div>
+
+                <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_hall'])): ?>
+                <div class="filter-section-label">Library</div>
+                <div class="filter-check-group">
+                    <label class="filter-option">
+                        <input type="checkbox" id="hallCheckbox" value="<?php echo htmlspecialchars($_SESSION['user_hall']); ?>" <?php echo !empty($hallFilter) ? 'checked' : ''; ?>>
+                        My Hall
+                    </label>
+                </div>
+                <?php endif; ?>
+
+                <div class="filter-panel-actions">
+                    <button class="btn-apply-filters" id="applyFiltersBtn">Apply Filters</button>
+                    <button class="btn-cancel-filters" id="cancelFiltersBtn">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -427,7 +585,7 @@ function toggleCategoryUrl($cat) {
     <?php endif; ?>
 
 
-    <?php if ($totalFilteredCount > count($filteredBooks)): ?>
+    <?php if (count($filteredBooks) >= $limit): ?>
         <div id="infiniteScrollTrigger" style="height: 100px; margin-top: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
             <div id="loader" style="display: none; color: var(--primary);">
                 <i class="fas fa-circle-notch fa-spin fa-2x"></i>
@@ -443,11 +601,10 @@ function toggleCategoryUrl($cat) {
 let cursorDate = <?php echo json_encode($initialCursor['date']); ?>;
 let cursorId = <?php echo json_encode($initialCursor['id']); ?>;
 let isLoading = false;
-let hasMore = <?php echo ($totalFilteredCount > count($filteredBooks)) ? 'true' : 'false'; ?>;
+let hasMore = <?php echo (count($filteredBooks) >= $limit) ? 'true' : 'false'; ?>;
 const booksGridDesktop = document.getElementById('booksGridDesktop');
 const booksGridMobile = document.getElementById('booksGridMobile');
 const loader = document.getElementById('loader');
-const countLabel = document.querySelector('#booksCountLabel strong');
 
 // Filters from PHP
 const currentFilters = {
@@ -456,6 +613,8 @@ const currentFilters = {
     availability: <?php echo json_encode($availability); ?>,
     hall: <?php echo json_encode($hallFilter); ?>
 };
+
+let currentSort = '<?php echo htmlspecialchars($sortParam); ?>';
 
 document.addEventListener("DOMContentLoaded", () => {
     setupIntersectionObserver();
@@ -493,15 +652,62 @@ function setupFilterListeners() {
         });
     });
 
-    // Availability Radios
-    document.querySelectorAll('.availability-radio').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            currentFilters.availability = e.target.value;
+    // ── Filter panel toggle ────────────────────────────────────────
+    const filtersToggleBtn = document.getElementById('filtersToggleBtn');
+    const filterPanel      = document.getElementById('filterPanel');
+
+    if (filtersToggleBtn && filterPanel) {
+        filtersToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            filterPanel.classList.toggle('show');
+            filtersToggleBtn.classList.toggle('active', filterPanel.classList.contains('show'));
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!filterPanel.contains(e.target) && e.target !== filtersToggleBtn) {
+                filterPanel.classList.remove('show');
+                filtersToggleBtn.classList.remove('active');
+            }
+        });
+    }
+
+    // Apply filters from panel
+    const applyBtn = document.getElementById('applyFiltersBtn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            const statusRadio = document.querySelector('input[name="filterStatus"]:checked');
+            currentFilters.availability = statusRadio ? statusRadio.value : '';
+
+            const hallCb = document.getElementById('hallCheckbox');
+            currentFilters.hall = (hallCb && hallCb.checked) ? hallCb.value : '';
+
+            // Update filter button active state
+            const hasActiveFilter = currentFilters.availability || currentFilters.hall;
+            if (filtersToggleBtn) filtersToggleBtn.classList.toggle('active', !!hasActiveFilter);
+
+            // Show/hide clear button
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            if (clearBtn) {
+                const anyFilter = currentFilters.search || currentFilters.categories.length || currentFilters.availability || currentFilters.hall;
+                clearBtn.style.display = anyFilter ? 'inline-flex' : 'none';
+            }
+
+            filterPanel.classList.remove('show');
             refreshBooks();
         });
-    });
+    }
 
-    // Clear Filters
+    // Cancel — just close panel
+    const cancelBtn = document.getElementById('cancelFiltersBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            filterPanel.classList.remove('show');
+            if (filtersToggleBtn) filtersToggleBtn.classList.remove('active');
+        });
+    }
+
+    // ── Clear all filters ─────────────────────────────────────────
     const clearBtn = document.getElementById('clearFiltersBtn');
     if (clearBtn) {
         clearBtn.addEventListener('click', (e) => {
@@ -509,32 +715,25 @@ function setupFilterListeners() {
             currentFilters.search = '';
             currentFilters.categories = [];
             currentFilters.availability = '';
-            
-            // Update UI
+            currentFilters.hall = '';
+
+            // Reset UI
             const hSearch = document.querySelector('.header-search-input');
             if (hSearch) hSearch.value = '';
             document.querySelectorAll('.category-chip').forEach(c => {
                 c.classList.toggle('active', !c.dataset.category);
             });
-            document.querySelectorAll('.availability-radio').forEach(r => {
-                r.checked = r.value === '';
-            });
-            document.querySelectorAll('.hall-checkbox').forEach(c => {
-                c.checked = false;
-            });
-            
+            // Reset panel radios/checkbox
+            const allRadio = document.querySelector('input[name="filterStatus"][value=""]');
+            if (allRadio) allRadio.checked = true;
+            const hallCb = document.getElementById('hallCheckbox');
+            if (hallCb) hallCb.checked = false;
+            if (filtersToggleBtn) filtersToggleBtn.classList.remove('active');
+
             refreshBooks();
             clearBtn.style.display = 'none';
         });
     }
-
-    // Hall Checkbox
-    document.querySelectorAll('.hall-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            currentFilters.hall = e.target.checked ? e.target.value : '';
-            refreshBooks();
-        });
-    });
 }
 
 
@@ -611,6 +810,9 @@ async function refreshBooks() {
     if (currentFilters.hall) url.searchParams.set('hall', currentFilters.hall);
     else url.searchParams.delete('hall');
     
+    if (currentSort !== 'newest') url.searchParams.set('sort', currentSort);
+    else url.searchParams.delete('sort');
+    
     window.history.pushState({}, '', url);
 
     // Show/Hide Clear button
@@ -672,6 +874,7 @@ async function loadMoreBooks() {
     currentFilters.categories.forEach(cat => params.append('categories[]', cat));
     if (currentFilters.availability) params.append('availability', currentFilters.availability);
     if (currentFilters.hall) params.append('hall', currentFilters.hall);
+    params.append('sort', currentSort);
     params.append('cursor_date', cursorDate);
     params.append('cursor_id', cursorId);
     params.append('limit', 25);
@@ -700,9 +903,7 @@ async function loadMoreBooks() {
             cursorId = result.cursor.id;
             hasMore = result.has_more;
             
-            // Update showing count
-            const currentCount = booksGridDesktop ? booksGridDesktop.querySelectorAll('.book-card').length : 0;
-            countLabel.textContent = currentCount;
+
         } else {
             hasMore = false;
         }
@@ -841,13 +1042,21 @@ function getRatingHtml(book) {
 }
 
 function sortBooks(criteria) {
+    currentSort = criteria;
+
+    // Date-based sorts: re-fetch from API so cursor pagination is correct
+    if (criteria === 'newest' || criteria === 'oldest') {
+        refreshBooks();
+        return;
+    }
+
     [booksGridDesktop, booksGridMobile].forEach(grid => {
         if (!grid) return;
         const books = Array.from(grid.children);
         books.sort((a, b) => {
             if (criteria === 'title') return a.dataset.title.localeCompare(b.dataset.title);
             if (criteria === 'author') return a.dataset.author.localeCompare(b.dataset.author);
-            return new Date(b.dataset.date || 0) - new Date(a.dataset.date || 0);
+            return 0;
         });
         
         books.forEach(book => {
