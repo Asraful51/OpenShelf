@@ -1,5 +1,23 @@
 # 📦 OpenShelf — Release History
 
+## 🚀 v3.0.0 — Design Revamp & Enhanced User Experience
+
+**Release Date:** May 21, 2026
+
+A major milestone release introducing completely redesigned core layouts, a unified global color scheme powered by CSS variables, and significant new features including Book Filtering and a dedicated Settings page.
+
+### Highlights
+
+- 🎨 **Complete Design Revamp** — Reimagined Profile, Footer, Book, and Header layouts.
+- ⚙️ **New Features** — Introduced Book Filtering and a dedicated Settings page.
+- 📱 **Floating Navigation** — Implemented a modern floating bottom navigation bar.
+- 💅 **Unified Color Scheme** — Refactored UI to use centralized CSS variables for consistent theming.
+- 🐛 **UI Polish** — Resolved the "jumping" problem in the plus button and updated global colors.
+
+📄 Full details: [v3.0.0 Release Notes](v3.0.0_release_notes.md)
+
+---
+
 ## 🚀 v2.9.1 — The "Unified Public Experience"
 
 **Release Date:** May 11, 2026
