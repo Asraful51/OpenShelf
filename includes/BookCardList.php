@@ -301,3 +301,73 @@ function renderBookCardList($books, $options = []) {
     }
     echo '</div>';
 }
+
+/**
+ * Render a skeleton loader for the Book Card List
+ *
+ * @param int $count Number of skeleton cards to render
+ * @param array $options Configuration options
+ */
+function renderBookCardListSkeleton($count = 3, $options = []) {
+    $listId = $options['id'] ?? '';
+    $listClass = $options['listClass'] ?? 'book-list';
+
+    // Ensure CSS is included once
+    static $skeletonCssIncluded = false;
+    if (!$skeletonCssIncluded) {
+        ?>
+        <style>
+            .skeleton-card-list { border: 1px solid var(--gray-200, #e2e8f0); box-shadow: none; pointer-events: none; }
+            .skeleton { background: #e2e8f0; }
+            .pulse { animation: pulse 1.5s infinite ease-in-out; }
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+            [data-theme="dark"] .skeleton { background: #334155; }
+            [data-theme="dark"] .skeleton-card-list { border-color: #334155; background: #1e293b; }
+            
+            /* Add some base layout identical to the real card for skeletons */
+            .skeleton-card-list.book-card-list .book-cover-image { background: #e2e8f0; }
+            [data-theme="dark"] .skeleton-card-list.book-card-list .book-cover-image { background: #334155; }
+        </style>
+        <?php
+        $skeletonCssIncluded = true;
+    }
+
+    echo '<div class="' . htmlspecialchars($listClass) . '" ' . ($listId ? 'id="' . htmlspecialchars($listId) . '"' : '') . '>';
+    
+    for ($i = 0; $i < $count; $i++) {
+        ?>
+        <div class="book-card-list skeleton-card-list">
+            <!-- Status Sign Skeleton -->
+            <div class="status-sign skeleton pulse" style="box-shadow: none;"></div>
+
+            <!-- Cover Skeleton -->
+            <div class="cover-link skeleton pulse" style="border-radius: 8px;"></div>
+
+            <!-- Content Skeleton -->
+            <div class="card-info-section">
+                <div class="book-info-link" style="padding-top: 4px;">
+                    <div class="skeleton pulse" style="width: 70%; height: 1.1rem; margin-bottom: 6px; border-radius: 4px;"></div>
+                    <div class="skeleton pulse" style="width: 40%; height: 0.85rem; margin-bottom: 8px; border-radius: 4px;"></div>
+                    <div class="skeleton pulse" style="width: 30%; height: 0.8rem; margin-bottom: 12px; border-radius: 4px;"></div>
+                </div>
+
+                <!-- Owner Skeleton -->
+                <div class="owner-link-area" style="border-top-color: transparent;">
+                    <div class="skeleton pulse" style="width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;"></div>
+                    <div class="owner-details" style="width: 100%;">
+                        <div class="skeleton pulse" style="width: 50%; height: 0.8rem; margin-bottom: 4px; border-radius: 4px;"></div>
+                        <div class="skeleton pulse" style="width: 30%; height: 0.7rem; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    echo '</div>';
+}
+

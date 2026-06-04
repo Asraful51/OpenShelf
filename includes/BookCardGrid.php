@@ -138,3 +138,60 @@ function renderBookCardGrid($books, $options = []) {
     
     echo '</div>';
 }
+
+/**
+ * Render a skeleton loader for the Book Card Grid
+ *
+ * @param int $count Number of skeleton cards to render
+ * @param array $options Configuration options
+ */
+function renderBookCardGridSkeleton($count = 4, $options = []) {
+    $gridId = $options['id'] ?? '';
+    $gridClass = $options['gridClass'] ?? 'book-grid';
+
+    // Ensure CSS is included once
+    static $skeletonCssIncluded = false;
+    if (!$skeletonCssIncluded) {
+        ?>
+        <style>
+            .skeleton-card { border: 1px solid var(--gray-200, #e2e8f0); box-shadow: none; pointer-events: none; }
+            .skeleton { background: #e2e8f0; }
+            .pulse { animation: pulse 1.5s infinite ease-in-out; }
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+            [data-theme="dark"] .skeleton { background: #334155; }
+            [data-theme="dark"] .skeleton-card { border-color: #334155; }
+            .skeleton-cover { aspect-ratio: 2 / 3; width: 100%; border-radius: 8px 8px 0 0; }
+        </style>
+        <?php
+        $skeletonCssIncluded = true;
+    }
+
+    echo '<div class="' . htmlspecialchars($gridClass) . '" ' . ($gridId ? 'id="' . htmlspecialchars($gridId) . '"' : '') . '>';
+    
+    for ($i = 0; $i < $count; $i++) {
+        ?>
+        <div class="book-card skeleton-card">
+            <div class="book-cover-container skeleton-cover skeleton pulse"></div>
+            
+            <div class="book-info">
+                <div class="skeleton pulse" style="width: 40%; height: 1rem; margin-bottom: 0.5rem; border-radius: 4px;"></div>
+                <div class="skeleton pulse" style="width: 85%; height: 1.25rem; margin-bottom: 0.5rem; border-radius: 4px;"></div>
+                <div class="skeleton pulse" style="width: 60%; height: 1rem; margin-bottom: 1rem; border-radius: 4px;"></div>
+                
+                <div class="book-footer">
+                    <div class="owner-info" style="gap: 0.5rem; width: 100%;">
+                        <div class="skeleton pulse" style="width: 28px; height: 28px; border-radius: 50%;"></div>
+                        <div class="skeleton pulse" style="width: 50%; height: 1rem; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    echo '</div>';
+}

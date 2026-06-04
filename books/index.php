@@ -586,13 +586,16 @@ function toggleCategoryUrl($cat) {
 
 
     <?php if (count($filteredBooks) >= $limit): ?>
-        <div id="infiniteScrollTrigger" style="height: 100px; margin-top: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
-            <div id="loader" style="display: none; color: var(--primary);">
-                <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+        <div id="infiniteScrollTrigger" style="margin-top: 2rem; width: 100%;">
+            <!-- Desktop/Tablet View Skeleton -->
+            <div id="skeleton-desktop-wrapper" class="hide-on-mobile" style="display: none;">
+                <?php if (function_exists('renderBookCardGridSkeleton')) renderBookCardGridSkeleton(4); ?>
             </div>
-            <button id="loadMoreBtn" class="btn-elegant" style="display: block; padding: 0.6rem 1.5rem; font-size: 0.9rem;">
-                <i class="fas fa-plus"></i> Load More Books
-            </button>
+            
+            <!-- Mobile View Skeleton -->
+            <div id="skeleton-mobile-wrapper" class="show-on-mobile" style="display: none;">
+                <?php if (function_exists('renderBookCardListSkeleton')) renderBookCardListSkeleton(3); ?>
+            </div>
         </div>
     <?php endif; ?>
 </div>
@@ -604,7 +607,8 @@ let isLoading = false;
 let hasMore = <?php echo (count($filteredBooks) >= $limit) ? 'true' : 'false'; ?>;
 const booksGridDesktop = document.getElementById('booksGridDesktop');
 const booksGridMobile = document.getElementById('booksGridMobile');
-const loader = document.getElementById('loader');
+const skeletonDesktop = document.getElementById('skeleton-desktop-wrapper');
+const skeletonMobile = document.getElementById('skeleton-mobile-wrapper');
 
 // Filters from PHP
 const currentFilters = {
@@ -791,7 +795,8 @@ async function refreshBooks() {
     if (booksGridMobile) booksGridMobile.innerHTML = '';
     
     // Show loader
-    loader.style.display = 'block';
+    if (skeletonDesktop) skeletonDesktop.style.display = 'block';
+    if (skeletonMobile) skeletonMobile.style.display = 'block';
     
     // Trigger first load
     await loadMoreBooks();
@@ -839,15 +844,7 @@ function setupIntersectionObserver() {
 
     observer.observe(trigger);
 
-    // Manual load more button as fallback
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', () => {
-            if (!isLoading && hasMore) {
-                loadMoreBooks();
-            }
-        });
-    }
+    // Fallback infinite scroll is intersection observer, button removed
     
     // Initial cards animation
     const cardObserver = new IntersectionObserver((entries) => {
@@ -867,7 +864,8 @@ async function loadMoreBooks() {
     if (isLoading || !hasMore) return;
     
     isLoading = true;
-    loader.style.display = 'block';
+    if (skeletonDesktop) skeletonDesktop.style.display = 'block';
+    if (skeletonMobile) skeletonMobile.style.display = 'block';
 
     const params = new URLSearchParams();
     if (currentFilters.search) params.append('search', currentFilters.search);
@@ -911,13 +909,8 @@ async function loadMoreBooks() {
         console.error('Error loading more books:', error);
     } finally {
         isLoading = false;
-        loader.style.display = 'none';
-        
-        // Hide button if no more books
-        const loadMoreBtn = document.getElementById('loadMoreBtn');
-        if (loadMoreBtn) {
-            loadMoreBtn.style.display = hasMore ? 'block' : 'none';
-        }
+        if (skeletonDesktop) skeletonDesktop.style.display = 'none';
+        if (skeletonMobile) skeletonMobile.style.display = 'none';
     }
 }
 
