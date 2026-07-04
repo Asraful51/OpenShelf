@@ -22,35 +22,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $_POST['message'] ?? '';
     $email = $_POST['email'] ?? $userEmail;
     $name = $_POST['name'] ?? $userName;
-    $userId = $_SESSION['user_id'] ?? 'guest';
+    $userId = $_SESSION['user_id'] ?? null;
 
     if (empty($subject) || empty($message) || empty($email)) {
         $error = "দয়া করে সব আবশ্যিক ক্ষেত্র পূরণ করুন।";
     } else {
-        // Prepare report data
-        $reportData = [
-            'id' => uniqid('rep_'),
-            'user_id' => $userId,
-            'name' => $name,
-            'email' => $email,
-            'type' => $type,
-            'subject' => $subject,
-            'message' => $message,
-            'status' => 'pending',
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        // Save to data/reports/ directory as JSON for now (fallback since no table exists)
-        $reportsDir = __DIR__ . '/data/reports/';
-        if (!is_dir($reportsDir)) {
-            mkdir($reportsDir, 0777, true);
-        }
-        
-        $filePath = $reportsDir . $reportData['id'] . '.json';
-        if (file_put_contents($filePath, json_encode($reportData, JSON_PRETTY_PRINT))) {
+        try {
+            $db = getDB();
+            $reportId = uniqid('rep_');
+            
+            $stmt = $db->prepare("INSERT INTO reports (id, user_id, name, email, type, subject, message, status, created_at) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())");
+            $stmt->execute([$reportId, $userId, $name, $email, $type, $subject, $message]);
+            
             header('Location: report.php?success=আপনার রিপোর্ট জমা দেওয়া হয়েছে। উন্নতি করতে সাহায্য করার জন্য ধন্যবাদ।');
             exit;
-        } else {
+        } catch (PDOException $e) {
+            error_log("Report submission error: " . $e->getMessage());
             $error = "রিপোর্ট সংরক্ষণ করতে ব্যর্থ হয়েছে। দয়া করে পরে আবার চেষ্টা করুন।";
         }
     }

@@ -480,15 +480,35 @@ $adminRole = $_SESSION['admin_role'] ?? 'admin';
                         <i class="fas fa-bullhorn"></i>
                         Announcements
                     </a>
-                    <a href="/admin/categories.php" class="menu-item <?php echo strpos($currentPath, '/admin/categories/') !== false ? 'active' : ''; ?>">
+                    <a href="/admin/categories.php" class="menu-item <?php echo strpos($currentPath, '/admin/categories') !== false ? 'active' : ''; ?>">
                         <i class="fas fa-tags"></i>
                         Categories
+                    </a>
+                    <a href="/admin/reports-management.php" class="menu-item <?php echo strpos($currentPath, '/admin/reports-management') !== false ? 'active' : ''; ?>">
+                        <i class="fas fa-flag"></i>
+                        User Reports
+                    </a>
+                    <a href="/admin/contact-messages.php" class="menu-item <?php echo strpos($currentPath, '/admin/contact-messages') !== false ? 'active' : ''; ?>">
+                        <i class="fas fa-envelope-open-text"></i>
+                        Contact Messages
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-title">Finance</div>
+                    <a href="/admin/support_us.php" class="menu-item <?php echo strpos($currentPath, '/admin/support_us') !== false ? 'active' : ''; ?>">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        Support Us
+                    </a>
+                    <a href="/admin/transaction.php" class="menu-item <?php echo strpos($currentPath, '/admin/transaction') !== false ? 'active' : ''; ?>">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Transactions
                     </a>
                 </div>
 
                 <div class="menu-section">
                     <div class="menu-title">Analytics</div>
-                    <a href="/admin/reports.php" class="menu-item <?php echo strpos($currentPath, '/admin/reports/') !== false ? 'active' : ''; ?>">
+                    <a href="/admin/reports.php" class="menu-item <?php echo strpos($currentPath, '/admin/reports.php') !== false ? 'active' : ''; ?>">
                         <i class="fas fa-chart-line"></i>
                         Reports & Analytics
                     </a>
