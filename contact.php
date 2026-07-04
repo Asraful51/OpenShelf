@@ -5,26 +5,45 @@
  */
 
 session_start();
-include 'includes/header.php';
+require_once __DIR__ . '/includes/db.php';
 
 $message = '';
 $error = '';
+
+// Get user data if logged in
+$isLoggedIn = isset($_SESSION['user_id']);
+$userName = $_SESSION['user_name'] ?? '';
+$userEmail = $_SESSION['user_email'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $subject = trim($_POST['subject'] ?? '');
     $messageText = trim($_POST['message'] ?? '');
+    $userId = $_SESSION['user_id'] ?? null;
     
     if (empty($name) || empty($email) || empty($subject) || empty($messageText)) {
-        $error = 'Please fill in all fields';
+        $error = 'দয়া করে সব ক্ষেত্র পূরণ করুন।';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Please enter a valid email address';
+        $error = 'দয়া করে একটি সঠিক ইমেইল ঠিকানা দিন।';
     } else {
-        // Send email (logic placeholder)
-        $message = 'Thank you for contacting us! We will get back to you soon.';
+        try {
+            $db = getDB();
+            $msgId = uniqid('msg_');
+            
+            $stmt = $db->prepare("INSERT INTO contact_messages (id, user_id, name, email, subject, message, status, created_at) 
+                                  VALUES (?, ?, ?, ?, ?, ?, 'unread', NOW())");
+            $stmt->execute([$msgId, $userId, $name, $email, $subject, $messageText]);
+            
+            $message = 'আপনার মেসেজ সফলভাবে পাঠানো হয়েছে! আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।';
+        } catch (PDOException $e) {
+            error_log("Contact message error: " . $e->getMessage());
+            $error = 'মেসেজ পাঠাতে ব্যর্থ হয়েছে। দয়া করে পরে আবার চেষ্টা করুন।';
+        }
     }
 }
+
+include 'includes/header.php';
 ?>
 
 <style>
@@ -254,27 +273,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
                 <div class="info-content">
                     <h3>অবস্থান</h3>
-                    <p>ক্যাম্পাস হাব, ঢাকা বিশ্ববিদ্যালয়</p>
+                    <p>ক্যাম্পাস হাব, ঢাকা বিশ্ববিদ্যালয়</p>
                 </div>
             </div>
         </div>
 
         <div class="form-card">
             <?php if ($message): ?>
-                <div class="alert alert-success"><?php echo $message; ?></div>
+                <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?></div>
             <?php endif; ?>
             <?php if ($error): ?>
-                <div class="alert alert-error"><?php echo $error; ?></div>
+                <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
             <form method="POST">
                 <div class="form-group">
                     <label>আপনার নাম</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($userName); ?>" required>
                 </div>
                 <div class="form-group">
                     <label>ইমেইল ঠিকানা</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($userEmail); ?>" required>
                 </div>
                 <div class="form-group">
                     <label>বিষয়</label>

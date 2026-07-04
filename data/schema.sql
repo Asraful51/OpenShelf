@@ -194,4 +194,50 @@ CREATE TABLE IF NOT EXISTS `login_otps` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+-- Table structure for table `reports`
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `reports` (
+  `id` varchar(30) NOT NULL,
+  `user_id` varchar(16) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `type` varchar(50) NOT NULL DEFAULT 'other',
+  `subject` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `status` varchar(20) DEFAULT 'pending',
+  `admin_notes` text DEFAULT NULL,
+  `resolved_by` varchar(50) DEFAULT NULL,
+  `resolved_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_reports_status` (`status`),
+  KEY `idx_reports_type` (`type`),
+  KEY `idx_reports_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Table structure for table `contact_messages`
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `contact_messages` (
+  `id` varchar(30) NOT NULL,
+  `user_id` varchar(16) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `status` varchar(20) DEFAULT 'unread',
+  `admin_reply` text DEFAULT NULL,
+  `replied_by` varchar(50) DEFAULT NULL,
+  `replied_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_contact_status` (`status`),
+  KEY `idx_contact_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
