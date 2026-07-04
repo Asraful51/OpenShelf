@@ -4,6 +4,8 @@
  * Modern UI - View all user notifications
  */
 
+session_start();
+
 // Include database connection
 require_once dirname(__DIR__) . '/includes/db.php';
 

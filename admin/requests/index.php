@@ -345,58 +345,47 @@ function extendReturnDate($requestId, $additionalDays, $reason = '') {
  */
 function createNotification($request, $status) {
     $userId = $request['borrower_id'];
-    $userFile = dirname(dirname(__DIR__)) . '/users/' . $userId . '.json';
-    if (!file_exists($userFile)) return;
     
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
+    $type = '';
+    $title = '';
+    $message = '';
     
     if ($status === 'approved') {
-        $notification = [
-            'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-            'user_id' => $userId,
-            'type' => 'request_approved',
-            'title' => 'Borrow Request Approved',
-            'message' => "Your request for '{$request['book_title']}' has been approved by admin",
-            'link' => "/requests/?id={$request['id']}",
-            'is_read' => false,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        $notifications[] = $notification;
+        $type = 'request_approved';
+        $title = 'Borrow Request Approved';
+        $message = "Your request for '{$request['book_title']}' has been approved by admin";
     } elseif ($status === 'rejected') {
-        $notification = [
-            'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-            'user_id' => $userId,
-            'type' => 'request_rejected',
-            'title' => 'Borrow Request Rejected',
-            'message' => "Your request for '{$request['book_title']}' has been rejected by admin",
-            'link' => "/requests/?id={$request['id']}",
-            'is_read' => false,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        $notifications[] = $notification;
+        $type = 'request_rejected';
+        $title = 'Borrow Request Rejected';
+        $message = "Your request for '{$request['book_title']}' has been rejected by admin";
     } elseif ($status === 'closed') {
-        $notification = [
-            'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-            'user_id' => $userId,
-            'type' => 'request_closed',
-            'title' => 'Borrow Request Closed',
-            'message' => "Your borrow request for '{$request['book_title']}' has been closed by admin",
-            'link' => "/requests/?id={$request['id']}",
-            'is_read' => false,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        $notifications[] = $notification;
+        $type = 'request_closed';
+        $title = 'Borrow Request Closed';
+        $message = "Your borrow request for '{$request['book_title']}' has been closed by admin";
+    } else {
+        return false;
     }
     
-    // Sort and limit
-    usort($notifications, function($a, $b) {
-        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
-    });
-    $notifications = array_slice($notifications, 0, 25);
-    
-    $userData['notifications'] = $notifications;
-    file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            INSERT INTO `notifications` 
+            (id, user_id, type, title, message, link, is_read, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+        ");
+        return $stmt->execute([
+            'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
+            $userId,
+            $type,
+            $title,
+            $message,
+            "/requests/?id={$request['id']}",
+            date('Y-m-d H:i:s')
+        ]);
+    } catch (Exception $e) {
+        error_log("Error creating admin request notification: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**
@@ -404,32 +393,26 @@ function createNotification($request, $status) {
  */
 function createExtensionNotification($request, $additionalDays) {
     $userId = $request['borrower_id'];
-    $userFile = dirname(dirname(__DIR__)) . '/users/' . $userId . '.json';
-    if (!file_exists($userFile)) return;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    
-    $notification = [
-        'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-        'user_id' => $userId,
-        'type' => 'return_date_extended',
-        'title' => 'Return Date Extended',
-        'message' => "Your return date for '{$request['book_title']}' has been extended by {$additionalDays} days",
-        'link' => "/requests/?id={$request['id']}",
-        'is_read' => false,
-        'created_at' => date('Y-m-d H:i:s')
-    ];
-    $notifications[] = $notification;
-    
-    // Sort and limit
-    usort($notifications, function($a, $b) {
-        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
-    });
-    $notifications = array_slice($notifications, 0, 25);
-    
-    $userData['notifications'] = $notifications;
-    file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            INSERT INTO `notifications` 
+            (id, user_id, type, title, message, link, is_read, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+        ");
+        return $stmt->execute([
+            'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
+            $userId,
+            'return_date_extended',
+            'Return Date Extended',
+            "Your return date for '{$request['book_title']}' has been extended by {$additionalDays} days",
+            "/requests/?id={$request['id']}",
+            date('Y-m-d H:i:s')
+        ]);
+    } catch (Exception $e) {
+        error_log("Error creating admin request extension notification: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**
