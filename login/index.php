@@ -45,7 +45,7 @@ function generateRememberToken()
 }
 
 /**
- * Save remember me token to user's profile
+ * Save remember me token to database
  * 
  * @param string $userId User ID
  * @param string $token Remember me token
@@ -54,37 +54,50 @@ function generateRememberToken()
  */
 function saveRememberToken($userId, $token, $expiry)
 {
-    $userFile = USERS_PATH . $userId . '.json';
-
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        
+        // Clean up expired tokens for this user
+        $cleanStmt = $db->prepare("DELETE FROM `remember_tokens` WHERE `user_id` = ? AND `expiry` <= ?");
+        $cleanStmt->execute([$userId, time()]);
+        
+        // Hash the token (sha256)
+        $hashedToken = hash('sha256', $token);
+        
+        // Insert new token
+        $insertStmt = $db->prepare("
+            INSERT INTO `remember_tokens` 
+            (user_id, token, expiry, user_agent, ip_address) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $insertStmt->execute([
+            $userId,
+            $hashedToken,
+            $expiry,
+            $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ]);
+        
+        // Keep only last 5 tokens for this user to prevent unlimited growth
+        $deleteOldStmt = $db->prepare("
+            DELETE FROM `remember_tokens` 
+            WHERE `user_id` = :user_id 
+            AND `id` NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM `remember_tokens` 
+                    WHERE `user_id` = :user_id 
+                    ORDER BY `created_at` DESC 
+                    LIMIT 5
+                ) tmp
+            )
+        ");
+        $deleteOldStmt->execute([':user_id' => $userId]);
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("Error saving remember token: " . $e->getMessage());
         return false;
     }
-
-    $userData = json_decode(file_get_contents($userFile), true);
-
-    // Initialize remember_tokens array if not exists
-    if (!isset($userData['remember_tokens'])) {
-        $userData['remember_tokens'] = [];
-    }
-
-    // Clean up expired tokens
-    $userData['remember_tokens'] = array_filter($userData['remember_tokens'], function ($t) {
-        return $t['expiry'] > time();
-    });
-
-    // Add new token
-    $userData['remember_tokens'][] = [
-        'token' => hash('sha256', $token), // Store hashed token for security
-        'expiry' => $expiry,
-        'created_at' => date('Y-m-d H:i:s'),
-        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-    ];
-
-    // Keep only last 5 tokens to prevent unlimited growth
-    $userData['remember_tokens'] = array_slice($userData['remember_tokens'], -5);
-
-    return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
 /**
@@ -100,31 +113,45 @@ function validateRememberToken($token)
     }
 
     list($userId, $tokenValue) = explode(':', $token, 2);
-
-    $userFile = USERS_PATH . $userId . '.json';
-    if (!file_exists($userFile)) {
-        return false;
-    }
-
-    $userData = json_decode(file_get_contents($userFile), true);
-
-    if (!isset($userData['remember_tokens'])) {
-        return false;
-    }
-
     $hashedToken = hash('sha256', $tokenValue);
 
-    foreach ($userData['remember_tokens'] as $storedToken) {
-        if ($storedToken['token'] === $hashedToken) {
-            // Check if token has expired
-            if ($storedToken['expiry'] > time()) {
-                // Optional: Verify user agent for additional security
-                if ($storedToken['user_agent'] === ($_SERVER['HTTP_USER_AGENT'] ?? 'unknown')) {
-                    return $userData;
-                }
-            }
-            break;
+    try {
+        $db = getDB();
+        
+        // Find token in remember_tokens table
+        $stmt = $db->prepare("
+            SELECT * FROM `remember_tokens` 
+            WHERE `user_id` = ? AND `token` = ? AND `expiry` > ?
+        ");
+        $stmt->execute([$userId, $hashedToken, time()]);
+        $storedToken = $stmt->fetch();
+        
+        if (!$storedToken) {
+            return false;
         }
+        
+        // Optional: Verify user agent for additional security
+        if ($storedToken['user_agent'] === ($_SERVER['HTTP_USER_AGENT'] ?? 'unknown')) {
+            // Fetch and return user data
+            $userStmt = $db->prepare("SELECT * FROM `users` WHERE `id` = ? AND `status` = 'active'");
+            $userStmt->execute([$userId]);
+            $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                // Return in the format expected by auto login
+                return [
+                    'id' => $user['id'],
+                    'personal_info' => [
+                        'name' => $user['name']
+                    ],
+                    'account_info' => [
+                        'role' => $user['role']
+                    ]
+                ];
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error validating remember token: " . $e->getMessage());
     }
 
     return false;
@@ -138,16 +165,14 @@ function validateRememberToken($token)
  */
 function clearRememberTokens($userId)
 {
-    $userFile = USERS_PATH . $userId . '.json';
-
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM `remember_tokens` WHERE `user_id` = ?");
+        return $stmt->execute([$userId]);
+    } catch (Exception $e) {
+        error_log("Error clearing remember tokens: " . $e->getMessage());
         return false;
     }
-
-    $userData = json_decode(file_get_contents($userFile), true);
-    $userData['remember_tokens'] = [];
-
-    return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
 /**

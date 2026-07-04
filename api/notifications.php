@@ -11,6 +11,9 @@ header('Content-Type: application/json');
 define('DATA_PATH', dirname(__DIR__) . '/data/');
 define('USERS_PATH', dirname(__DIR__) . '/users/');
 
+// Include database connection
+require_once dirname(__DIR__) . '/includes/db.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -21,142 +24,111 @@ if (!isset($_SESSION['user_id'])) {
 $currentUserId = $_SESSION['user_id'];
 
 /**
- * Load notifications for current user
+ * Load notifications for current user from database
  */
 function loadUserNotifications($userId, $limit = 50, $includeRead = false) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $sql = "SELECT * FROM `notifications` WHERE `user_id` = :user_id";
+        
+        if (!$includeRead) {
+            $sql .= " AND `is_read` = 0";
+        }
+        
+        // Filter out expired notifications
+        $sql .= " AND (`expires_at` IS NULL OR `expires_at` > NOW())";
+        
+        $sql .= " ORDER BY `created_at` DESC LIMIT " . intval($limit);
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error loading notifications: " . $e->getMessage());
         return [];
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $userNotifications = $userData['notifications'] ?? [];
-    
-    $filteredNotifications = [];
-    foreach ($userNotifications as $notification) {
-        // Filter out read notifications if not including them
-        if (!$includeRead && $notification['is_read']) {
-            continue;
-        }
-        
-        // Check if notification has expired
-        if (isset($notification['expires_at']) && strtotime($notification['expires_at']) < time()) {
-            continue;
-        }
-        
-        $filteredNotifications[] = $notification;
-    }
-    
-    // Already sorted, but ensure
-    usort($filteredNotifications, function($a, $b) {
-        return strtotime($b['created_at']) - strtotime($a['created_at']);
-    });
-    
-    // Apply limit
-    return array_slice($filteredNotifications, 0, $limit);
 }
 
 /**
- * Mark notification as read
+ * Mark notification as read in database
  */
 function markAsRead($notificationId, $userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            UPDATE `notifications` 
+            SET `is_read` = 1, `read_at` = :read_at 
+            WHERE `id` = :id AND `user_id` = :user_id
+        ");
+        return $stmt->execute([
+            ':read_at' => date('Y-m-d H:i:s'),
+            ':id' => $notificationId,
+            ':user_id' => $userId
+        ]);
+    } catch (Exception $e) {
+        error_log("Error marking notification as read: " . $e->getMessage());
         return false;
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    $updated = false;
-    
-    foreach ($notifications as &$notification) {
-        if ($notification['id'] === $notificationId) {
-            $notification['is_read'] = true;
-            $notification['read_at'] = date('Y-m-d H:i:s');
-            $updated = true;
-            break;
-        }
-    }
-    
-    if ($updated) {
-        $userData['notifications'] = $notifications;
-        return file_put_contents(
-            $userFile,
-            json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
-    }
-    
-    return false;
 }
 
 /**
- * Mark all notifications as read for user
+ * Mark all notifications as read for user in database
  */
 function markAllAsRead($userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            UPDATE `notifications` 
+            SET `is_read` = 1, `read_at` = :read_at 
+            WHERE `user_id` = :user_id AND `is_read` = 0
+        ");
+        return $stmt->execute([
+            ':read_at' => date('Y-m-d H:i:s'),
+            ':user_id' => $userId
+        ]);
+    } catch (Exception $e) {
+        error_log("Error marking all notifications as read: " . $e->getMessage());
         return false;
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    $updated = false;
-    
-    foreach ($notifications as &$notification) {
-        if (!$notification['is_read']) {
-            $notification['is_read'] = true;
-            $notification['read_at'] = date('Y-m-d H:i:s');
-            $updated = true;
-        }
-    }
-    
-    if ($updated) {
-        $userData['notifications'] = $notifications;
-        return file_put_contents(
-            $userFile,
-            json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
-    }
-    
-    return false;
 }
 
 /**
- * Delete notification
+ * Delete notification from database
  */
 function deleteNotification($notificationId, $userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM `notifications` WHERE `id` = :id AND `user_id` = :user_id");
+        return $stmt->execute([
+            ':id' => $notificationId,
+            ':user_id' => $userId
+        ]);
+    } catch (Exception $e) {
+        error_log("Error deleting notification: " . $e->getMessage());
         return false;
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    $filtered = array_filter($notifications, function($notification) use ($notificationId) {
-        return $notification['id'] !== $notificationId;
-    });
-    
-    if (count($filtered) !== count($notifications)) {
-        $userData['notifications'] = array_values($filtered);
-        return file_put_contents(
-            $userFile,
-            json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
-    }
-    
-    return false;
 }
 
 /**
- * Get unread count
+ * Get unread count from database
  */
 function getUnreadCount($userId) {
-    $notifications = loadUserNotifications($userId, 100, false);
-    return count($notifications);
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            SELECT COUNT(*) 
+            FROM `notifications` 
+            WHERE `user_id` = :user_id 
+            AND `is_read` = 0 
+            AND (`expires_at` IS NULL OR `expires_at` > NOW())
+        ");
+        $stmt->execute([':user_id' => $userId]);
+        return (int)$stmt->fetchColumn();
+    } catch (Exception $e) {
+        error_log("Error getting unread count: " . $e->getMessage());
+        return 0;
+    }
 }
 
 // Handle request method

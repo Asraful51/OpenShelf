@@ -45,19 +45,6 @@ if ($isLoggedIn && isset($_SESSION['user_id'])) {
         }
     }
 
-    // Fallback/Detailed: Load from detailed profile
-    $userFile = dirname(__DIR__) . '/users/' . $userId . '.json';
-    if (file_exists($userFile)) {
-        $userData = json_decode(file_get_contents($userFile), true);
-        // Supplement name/email if not in master or if explicitly set in profile
-        $userName = $userData['personal_info']['name'] ?? $userName;
-        $userEmail = $userData['personal_info']['email'] ?? $userEmail;
-        // Only override avatar if it's explicitly set in personal_info and not already set from master
-        if ($userAvatar === 'default-avatar.jpg' && isset($userData['personal_info']['profile_pic'])) {
-            $userAvatar = $userData['personal_info']['profile_pic'];
-        }
-    }
-    
     // Also check session for override (e.g. immediately after update)
     if (isset($_SESSION['user_name'])) {
         $userName = $_SESSION['user_name'];
@@ -66,16 +53,20 @@ if ($isLoggedIn && isset($_SESSION['user_id'])) {
         $userAvatar = $_SESSION['user_avatar'];
     }
     
-    // Get notification count
-    $userFile = dirname(__DIR__) . '/users/' . $userId . '.json';
-    if (file_exists($userFile)) {
-        $userData = json_decode(file_get_contents($userFile), true);
-        $notifications = $userData['notifications'] ?? [];
-        foreach ($notifications as $n) {
-            if (empty($n['is_read'])) {
-                $notificationCount++;
-            }
-        }
+    // Get notification count from database
+    try {
+        $notifStmt = $db->prepare("
+            SELECT COUNT(*) 
+            FROM `notifications` 
+            WHERE `user_id` = ? 
+            AND `is_read` = 0 
+            AND (`expires_at` IS NULL OR `expires_at` > NOW())
+        ");
+        $notifStmt->execute([$userId]);
+        $notificationCount = (int)$notifStmt->fetchColumn();
+    } catch (Exception $e) {
+        error_log("Error getting notification count in header: " . $e->getMessage());
+        $notificationCount = 0;
     }
 }
 

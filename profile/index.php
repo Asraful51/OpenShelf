@@ -35,17 +35,10 @@ function loadUserData($userId) {
     $user = $stmt->fetch();
     
     if ($user) {
-        $bio = '';
-        $userFile = USERS_PATH . $userId . '.json';
-        if (file_exists($userFile)) {
-            $userData = json_decode(file_get_contents($userFile), true);
-            $bio = $userData['personal_info']['bio'] ?? '';
-        }
-        
         return [
             'personal_info' => [
                 'name' => $user['name'] ?? 'Unknown User',
-                'bio' => $bio,
+                'bio' => $user['bio'] ?? '',
                 'department' => $user['department'] ?? 'N/A',
                 'session' => $user['session'] ?? 'N/A',
                 'hall' => $user['hall'] ?? '',
