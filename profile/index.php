@@ -62,7 +62,7 @@ function loadUserData($userId) {
 function loadUserBooks($userId) {
     if (empty($userId)) return [];
     $db = getDB();
-    $stmt = $db->prepare("SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, u.hall as owner_hall, u.profile_pic as owner_avatar FROM books b LEFT JOIN users u ON b.owner_id = u.id WHERE b.owner_id = ?");
+    $stmt = $db->prepare("SELECT b.id, b.title, b.author, b.category, b.status, b.created_at, b.cover_image, b.rating, b.rating_count, b.owner_id, u.name as owner_name, u.hall as owner_hall, u.profile_pic as owner_avatar FROM books b LEFT JOIN users u ON b.owner_id = u.id WHERE b.owner_id = ?");
     $stmt->execute([$userId]);
     return $stmt->fetchAll();
 }
@@ -271,25 +271,13 @@ $showSensitiveInfo = $isOwnProfile; // Only owner can see sensitive info like ro
         <!-- Consolidated Actions Wrapper from sketch -->
         <div class="profile-actions-wrapper">
             <?php if ($isOwnProfile): ?>
-                <!-- Side by side action buttons replaced by full-width Add Book CTA -->
-                <div class="action-buttons-row" style="grid-template-columns: 1fr;">
+                <div class="action-buttons-row">
+                    <a href="/settings/edit-profile/" class="btn btn-profile-action add-btn" style="justify-content: center;">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
                     <a href="/add-book/" class="btn btn-profile-action edit-btn" style="justify-content: center;">
                         <i class="fas fa-plus-circle"></i> Add Book
                     </a>
-                </div>
-            <?php elseif (isset($_SESSION['user_id'])): ?>
-                <!-- Contact row for logged in users viewing other profiles -->
-                <div class="action-buttons-row single-action">
-                    <?php if (!empty($user['personal_info']['phone'])): ?>
-                        <a href="https://wa.me/88<?php echo preg_replace('/[^0-9]/', '', $user['personal_info']['phone']); ?>" 
-                           target="_blank" class="btn btn-profile-action contact-btn">
-                            <i class="fab fa-whatsapp"></i> Contact Me
-                        </a>
-                    <?php else: ?>
-                        <span class="btn btn-profile-action contact-btn disabled">
-                            <i class="fas fa-phone-slash"></i> No Phone Provided
-                        </span>
-                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>
