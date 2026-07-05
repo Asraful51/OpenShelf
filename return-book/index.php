@@ -310,6 +310,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Update book status to available
             updateBookStatus($request['book_id'], 'available');
+
+            // Reset wishlist notified flags so the cron job will email
+            // the first person who added this book to their wishlist.
+            try {
+                $db = getDB();
+                $db->prepare("UPDATE wishlist SET notified = 0, updated_at = ? WHERE book_id = ?")
+                   ->execute([date('Y-m-d H:i:s'), $request['book_id']]);
+            } catch (Exception $e) {
+                error_log("⚠️ Failed to reset wishlist notified flags for book {$request['book_id']}: " . $e->getMessage());
+            }
             
             // Update borrower's list (remove from currently borrowed)
             updateUserBorrowedList($request['borrower_id'], $request['book_id'], 'remove');
