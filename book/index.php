@@ -205,6 +205,52 @@ function createNotification($userId, $type, $title, $message, $link) {
 }
 
 /**
+ * Check if user has wishlisted this book
+ */
+function isBookWishlisted($bookId, $userId) {
+    if (empty($userId)) return false;
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id FROM wishlist WHERE book_id = ? AND user_id = ?");
+    $stmt->execute([$bookId, $userId]);
+    return $stmt->fetch() !== false;
+}
+
+/**
+ * Toggle wishlist entry (add or remove)
+ * Returns ['added' => bool, 'count' => int]
+ */
+function toggleWishlist($bookId, $userId, $bookTitle) {
+    $db = getDB();
+    $check = $db->prepare("SELECT id FROM wishlist WHERE book_id = ? AND user_id = ?");
+    $check->execute([$bookId, $userId]);
+    if ($check->fetch()) {
+        // Remove
+        $db->prepare("DELETE FROM wishlist WHERE book_id = ? AND user_id = ?")->execute([$bookId, $userId]);
+        $added = false;
+    } else {
+        // Add
+        $db->prepare("
+            INSERT INTO wishlist (user_id, book_id, book_title, notified, created_at)
+            VALUES (?, ?, ?, 0, ?)
+        ")->execute([$userId, $bookId, $bookTitle, date('Y-m-d H:i:s')]);
+        $added = true;
+    }
+    $countStmt = $db->prepare("SELECT COUNT(*) FROM wishlist WHERE book_id = ?");
+    $countStmt->execute([$bookId]);
+    return ['added' => $added, 'count' => (int)$countStmt->fetchColumn()];
+}
+
+/**
+ * Get wishlist count for a book
+ */
+function getWishlistCount($bookId) {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) FROM wishlist WHERE book_id = ?");
+    $stmt->execute([$bookId]);
+    return (int)$stmt->fetchColumn();
+}
+
+/**
  * Load related books from same category
  */
 function loadRelatedBooks($category, $excludeId, $limit = 4) {
@@ -265,6 +311,11 @@ $currentUserName = $_SESSION['user_name'] ?? 'Unknown';
 $isOwner = $isLoggedIn && $currentUserId === $book['owner_id'];
 $hasRequested = $isLoggedIn && hasUserRequested($bookId, $currentUserId);
 $canBorrow = $book['status'] === 'available' && $isLoggedIn && !$isOwner && !$hasRequested;
+
+// Wishlist state
+$isUnavailable = $book['status'] !== 'available';
+$isWishlisted  = $isLoggedIn && !$isOwner && $isUnavailable && isBookWishlisted($bookId, $currentUserId);
+$wishlistCount = getWishlistCount($bookId);
 
 // Get rating from DB columns
 $avgRating = number_format($book['rating'] ?? 0, 1);
@@ -479,6 +530,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to save comment to database']);
     }
+    exit;
+}
+
+// Handle wishlist toggle (AJAX)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'toggle_wishlist') {
+    header('Content-Type: application/json');
+
+    if (!$isLoggedIn) {
+        echo json_encode(['success' => false, 'message' => 'Please login to use wishlist']);
+        exit;
+    }
+
+    // Only allow wishlisting unavailable books
+    if ($book['status'] === 'available') {
+        echo json_encode(['success' => false, 'message' => 'Book is already available — request to borrow instead!']);
+        exit;
+    }
+
+    // Owner cannot wishlist their own book
+    if ($isOwner) {
+        echo json_encode(['success' => false, 'message' => 'You cannot wishlist your own book']);
+        exit;
+    }
+
+    $result = toggleWishlist($bookId, $currentUserId, $book['title']);
+    echo json_encode(['success' => true, 'added' => $result['added'], 'count' => $result['count']]);
     exit;
 }
 
@@ -941,6 +1018,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
         }
     }
 
+    /* ── Wishlist Button ──────────────────────────────── */
+    .btn-wishlist {
+        background: #fff;
+        border: 2px solid var(--border);
+        color: var(--text-muted);
+        gap: 0.5rem;
+        flex: 0 0 auto;
+        min-width: unset;
+        padding: 0.85rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-wishlist i {
+        font-size: 1rem;
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .btn-wishlist:hover {
+        border-color: #e11d48;
+        color: #e11d48;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(225, 29, 72, 0.15);
+    }
+    .btn-wishlist.wishlisted {
+        background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+        border-color: #e11d48;
+        color: #e11d48;
+    }
+    .btn-wishlist.wishlisted i {
+        animation: heartBeat 0.4s ease;
+    }
+    @keyframes heartBeat {
+        0%   { transform: scale(1); }
+        40%  { transform: scale(1.35); }
+        70%  { transform: scale(0.9); }
+        100% { transform: scale(1); }
+    }
+    .btn-wishlist .wishlist-count {
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: rgba(225, 29, 72, 0.12);
+        color: #e11d48;
+        border-radius: 99px;
+        padding: 1px 6px;
+        display: inline-block;
+        line-height: 1.4;
+    }
+    .wishlist-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 8px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 20;
+    }
+    .btn-wishlist:hover .wishlist-tooltip { opacity: 1; }
+
     /* Dark Mode Overrides */
     :root[data-theme="dark"] {
         --bg: #0f172a;
@@ -1075,6 +1225,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
                         <?php else: ?>
                             <button class="btn btn-secondary" disabled style="cursor: not-allowed;">
                                 <i class="fas fa-lock"></i> Currently Unavailable
+                            </button>
+                        <?php endif; ?>
+
+                        <?php if ($isLoggedIn && !$isOwner && $isUnavailable): ?>
+                            <!-- Wishlist toggle button (only shown when book is unavailable) -->
+                            <button
+                                id="wishlistBtn"
+                                class="btn-wishlist <?php echo $isWishlisted ? 'wishlisted' : ''; ?>"
+                                onclick="toggleWishlist()"
+                                title="<?php echo $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'; ?>"
+                                aria-label="Wishlist"
+                            >
+                                <span class="wishlist-tooltip">
+                                    <?php echo $isWishlisted ? 'Remove from wishlist' : 'Notify me when available'; ?>
+                                </span>
+                                <i class="<?php echo $isWishlisted ? 'fas' : 'far'; ?> fa-heart"></i>
+                                <?php if ($wishlistCount > 0): ?>
+                                    <span class="wishlist-count" id="wishlistCount"><?php echo $wishlistCount; ?></span>
+                                <?php else: ?>
+                                    <span class="wishlist-count" id="wishlistCount" style="display:none">0</span>
+                                <?php endif; ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -1339,6 +1510,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
             }).catch(e => console.error(e));
         }
         
+        // ── Wishlist toggle ─────────────────────────────────────────
+        function toggleWishlist() {
+            const btn   = document.getElementById('wishlistBtn');
+            const icon  = btn ? btn.querySelector('i') : null;
+            const badge = document.getElementById('wishlistCount');
+            if (!btn || !icon) return;
+
+            // Optimistic UI
+            const wasWishlisted = btn.classList.contains('wishlisted');
+            btn.classList.toggle('wishlisted', !wasWishlisted);
+            icon.className = wasWishlisted ? 'far fa-heart' : 'fas fa-heart';
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ajax_action: 'toggle_wishlist' })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revert optimistic update
+                    btn.classList.toggle('wishlisted', wasWishlisted);
+                    icon.className = wasWishlisted ? 'fas fa-heart' : 'far fa-heart';
+                    alert(data.message || 'Failed to update wishlist');
+                    return;
+                }
+                // Update badge count
+                if (badge) {
+                    badge.textContent = data.count;
+                    badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+                }
+                // Update tooltip text
+                const tip = btn.querySelector('.wishlist-tooltip');
+                if (tip) tip.textContent = data.added ? 'Remove from wishlist' : 'Notify me when available';
+                btn.title = data.added ? 'Remove from wishlist' : 'Add to wishlist';
+            })
+            .catch(() => {
+                // Revert
+                btn.classList.toggle('wishlisted', wasWishlisted);
+                icon.className = wasWishlisted ? 'fas fa-heart' : 'far fa-heart';
+            });
+        }
+
         // Share
         function shareBook() {
             if (navigator.share) {
