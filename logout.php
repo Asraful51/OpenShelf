@@ -10,38 +10,26 @@ session_start();
 define('DATA_PATH', __DIR__ . '/data/');
 define('USERS_PATH', __DIR__ . '/users/');
 
+// Include database connection
+require_once __DIR__ . '/includes/db.php';
+
 /**
- * Clear remember me token from user's profile
+ * Clear remember me token from database
  * 
  * @param string $userId User ID
  * @param string $token Token to remove
  * @return bool Success status
  */
 function clearRememberToken($userId, $token) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $hashedToken = hash('sha256', $token);
+        $stmt = $db->prepare("DELETE FROM `remember_tokens` WHERE `user_id` = ? AND `token` = ?");
+        return $stmt->execute([$userId, $hashedToken]);
+    } catch (Exception $e) {
+        error_log("Error clearing remember token in logout: " . $e->getMessage());
         return false;
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    
-    if (!isset($userData['remember_tokens'])) {
-        return true;
-    }
-    
-    // Hash the token to match stored format
-    $hashedToken = hash('sha256', $token);
-    
-    // Remove the specific token
-    $userData['remember_tokens'] = array_filter($userData['remember_tokens'], function($t) use ($hashedToken) {
-        return $t['token'] !== $hashedToken;
-    });
-    
-    return file_put_contents(
-        $userFile,
-        json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-    );
 }
 
 /**
@@ -51,19 +39,14 @@ function clearRememberToken($userId, $token) {
  * @return bool Success status
  */
 function clearAllRememberTokens($userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM `remember_tokens` WHERE `user_id` = ?");
+        return $stmt->execute([$userId]);
+    } catch (Exception $e) {
+        error_log("Error clearing all remember tokens in logout: " . $e->getMessage());
         return false;
     }
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $userData['remember_tokens'] = [];
-    
-    return file_put_contents(
-        $userFile,
-        json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-    );
 }
 
 /**

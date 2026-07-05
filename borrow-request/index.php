@@ -102,33 +102,26 @@ function updateBookStatus($bookId, $status) {
  * Create in-app notification for owner
  */
 function createOwnerNotification($ownerId, $borrowerName, $bookTitle, $requestId) {
-    $userFile = dirname(__DIR__) . '/users/' . $ownerId . '.json';
-    if (!file_exists($userFile)) return false;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    
-    $notifications[] = [
-        'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-        'user_id' => $ownerId,
-        'type' => 'borrow_request',
-        'title' => 'New Borrow Request',
-        'message' => "$borrowerName wants to borrow '$bookTitle'",
-        'link' => '/requests/?id=' . $requestId,
-        'is_read' => false,
-        'created_at' => date('Y-m-d H:i:s')
-    ];
-    
-    // Sort by created_at desc
-    usort($notifications, function($a, $b) {
-        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
-    });
-    
-    // Limit to 25
-    $notifications = array_slice($notifications, 0, 25);
-    
-    $userData['notifications'] = $notifications;
-    return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            INSERT INTO `notifications` 
+            (id, user_id, type, title, message, link, is_read, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+        ");
+        return $stmt->execute([
+            'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
+            $ownerId,
+            'borrow_request',
+            'New Borrow Request',
+            "$borrowerName wants to borrow '$bookTitle'",
+            '/requests/?id=' . $requestId,
+            date('Y-m-d H:i:s')
+        ]);
+    } catch (Exception $e) {
+        error_log("Error creating owner notification: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**

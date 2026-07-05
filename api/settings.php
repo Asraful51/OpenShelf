@@ -27,7 +27,7 @@ $db = getDB();
 // Handle GET request to retrieve user profile data
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        $stmt = $db->prepare("SELECT id, name, email, department, session, phone, room_number, hall, profile_pic FROM users WHERE id = ?");
+        $stmt = $db->prepare("SELECT id, name, email, department, session, phone, room_number, hall, profile_pic, bio FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -39,14 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit;
         }
 
-        // Fetch bio from json file if available
-        $bio = '';
-        $userFile = dirname(__DIR__) . '/users/' . $userId . '.json';
-        if (file_exists($userFile)) {
-            $userData = json_decode(file_get_contents($userFile), true);
-            $bio = $userData['personal_info']['bio'] ?? '';
-        }
-        $user['bio'] = $bio;
+        // Set bio to empty string if null
+        $user['bio'] = $user['bio'] ?? '';
 
         echo json_encode([
             'success' => true,
@@ -237,6 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         session = :session, 
                         room_number = :room_number, 
                         hall = :hall,
+                        bio = :bio,
                         updated_at = :updated_at";
             
             $params = [
@@ -246,6 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':session' => $session,
                 ':room_number' => $roomNumber,
                 ':hall' => $hall,
+                ':bio' => $bio,
                 ':updated_at' => date('Y-m-d H:i:s'),
                 ':id' => $userId
             ];
@@ -266,34 +262,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql .= " WHERE id = :id";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
-
-            // Update individual profile JSON file for backward compatibility
-            $usersPath = dirname(__DIR__) . '/users/';
-            if (!file_exists($usersPath)) {
-                mkdir($usersPath, 0755, true);
-            }
-            $profileFile = $usersPath . $userId . '.json';
-            $profileData = [];
-            if (file_exists($profileFile)) {
-                $profileData = json_decode(file_get_contents($profileFile), true);
-            }
-
-            $profileData['personal_info'] = [
-                'name' => $name,
-                'email' => $profileData['personal_info']['email'] ?? $userEmail,
-                'department' => $department,
-                'session' => $session,
-                'phone' => $phone,
-                'room_number' => $roomNumber,
-                'hall' => $hall,
-                'bio' => $bio,
-                'profile_pic' => $currentProfilePic
-            ];
-
-            file_put_contents(
-                $profileFile,
-                json_encode($profileData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-            );
 
             // Sync with current session
             $_SESSION['user_name'] = $name;

@@ -95,40 +95,27 @@ function sendAnnouncementEmail($userEmail, $userName, $announcement) {
  * Create notification for a user
  */
 function createAnnouncementNotification($userId, $announcement) {
-    $userFile = dirname(dirname(__DIR__)) . '/users/' . $userId . '.json';
-    if (!file_exists($userFile)) return false;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    
-    $priorityIcon = [
-        'info' => 'fa-info-circle',
-        'success' => 'fa-check-circle',
-        'warning' => 'fa-exclamation-triangle',
-        'danger' => 'fa-exclamation-circle'
-    ];
-    
-    $notifications[] = [
-        'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-        'user_id' => $userId,
-        'type' => 'announcement',
-        'title' => $announcement['title'],
-        'message' => substr($announcement['content'], 0, 100) . (strlen($announcement['content']) > 100 ? '...' : ''),
-        'link' => '/announcements/?id=' . $announcement['id'],
-        'icon' => $priorityIcon[$announcement['priority']] ?? 'fa-bullhorn',
-        'is_read' => false,
-        'created_at' => date('Y-m-d H:i:s'),
-        'expires_at' => $announcement['expires_at'] ?? date('Y-m-d H:i:s', strtotime('+30 days'))
-    ];
-    
-    // Sort and limit
-    usort($notifications, function($a, $b) {
-        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
-    });
-    $notifications = array_slice($notifications, 0, 25);
-    
-    $userData['notifications'] = $notifications;
-    return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            INSERT INTO `notifications` 
+            (id, user_id, type, title, message, link, is_read, created_at, expires_at) 
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)
+        ");
+        return $stmt->execute([
+            'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
+            $userId,
+            'announcement',
+            $announcement['title'],
+            substr($announcement['content'], 0, 100) . (strlen($announcement['content']) > 100 ? '...' : ''),
+            '/announcements/?id=' . $announcement['id'],
+            date('Y-m-d H:i:s'),
+            !empty($announcement['expires_at']) ? date('Y-m-d H:i:s', strtotime($announcement['expires_at'])) : date('Y-m-d H:i:s', strtotime('+30 days'))
+        ]);
+    } catch (Exception $e) {
+        error_log("Error creating announcement notification: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**

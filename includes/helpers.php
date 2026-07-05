@@ -26,7 +26,9 @@ function getUserById($userId) {
             'session' => $user['session'],
             'phone' => $user['phone'],
             'room_number' => $user['room_number'],
-            'hall' => $user['hall']
+            'hall' => $user['hall'],
+            'bio' => $user['bio'],
+            'profile_pic' => $user['profile_pic']
         ],
         'account_info' => [
             'verified' => (bool)$user['verified'],

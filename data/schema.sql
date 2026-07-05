@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `verified` tinyint(1) DEFAULT 0,
   `role` varchar(20) DEFAULT 'user',
   `profile_pic` varchar(255) DEFAULT 'default-avatar.jpg',
+  `bio` text DEFAULT NULL,
   `status` varchar(20) DEFAULT 'active',
   `rejection_reason` text DEFAULT NULL,
   `verified_by` varchar(50) DEFAULT NULL,
@@ -238,6 +239,43 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
   PRIMARY KEY (`id`),
   KEY `idx_contact_status` (`status`),
   KEY `idx_contact_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Table structure for table `notifications`
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` varchar(50) NOT NULL,
+  `user_id` varchar(16) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Table structure for table `remember_tokens`
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `remember_tokens` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(16) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `expiry` int(11) NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_remember_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 COMMIT;

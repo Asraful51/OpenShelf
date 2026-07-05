@@ -6,10 +6,8 @@
 
 session_start();
 
-// Configuration
-define('DATA_PATH', dirname(__DIR__) . '/data/');
-define('USERS_PATH', dirname(__DIR__) . '/users/');
-define('BASE_URL', 'https://duopenshelf.top');
+// Include database connection
+require_once dirname(__DIR__) . '/includes/db.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -22,15 +20,23 @@ $currentUserId = $_SESSION['user_id'];
 $currentUserName = $_SESSION['user_name'] ?? 'User';
 
 /**
- * Load user's notifications from their file
+ * Load user's notifications from database
  */
 function loadUserNotifications($userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    if (!file_exists($userFile)) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            SELECT * FROM `notifications` 
+            WHERE `user_id` = ? 
+            AND (`expires_at` IS NULL OR `expires_at` > NOW())
+            ORDER BY `created_at` DESC
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error loading notifications: " . $e->getMessage());
         return [];
     }
-    $userData = json_decode(file_get_contents($userFile), true);
-    return $userData['notifications'] ?? [];
 }
 
 /**
@@ -43,8 +49,6 @@ function getUserNotifications($userId, $includeRead = true) {
         $userNotifications = array_filter($userNotifications, fn($n) => empty($n['is_read']));
     }
     
-    // Already sorted in migration, but ensure
-    usort($userNotifications, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
     return $userNotifications;
 }
 
@@ -52,71 +56,53 @@ function getUserNotifications($userId, $includeRead = true) {
  * Mark notification as read
  */
 function markAsRead($notificationId, $userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    if (!file_exists($userFile)) return false;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    $updated = false;
-    
-    foreach ($notifications as &$n) {
-        if ($n['id'] === $notificationId) {
-            $n['is_read'] = true;
-            $n['read_at'] = date('Y-m-d H:i:s');
-            $updated = true;
-            break;
-        }
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            UPDATE `notifications` 
+            SET `is_read` = 1, `read_at` = ? 
+            WHERE `id` = ? AND `user_id` = ?
+        ");
+        return $stmt->execute([date('Y-m-d H:i:s'), $notificationId, $userId]);
+    } catch (Exception $e) {
+        error_log("Error marking notification read: " . $e->getMessage());
+        return false;
     }
-    
-    if ($updated) {
-        $userData['notifications'] = $notifications;
-        return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    }
-    return false;
 }
 
 /**
  * Mark all notifications as read
  */
 function markAllAsRead($userId) {
-    $userFile = USERS_PATH . $userId . '.json';
-    if (!file_exists($userFile)) return false;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    $updated = false;
-    
-    foreach ($notifications as &$n) {
-        if (empty($n['is_read'])) {
-            $n['is_read'] = true;
-            $n['read_at'] = date('Y-m-d H:i:s');
-            $updated = true;
-        }
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            UPDATE `notifications` 
+            SET `is_read` = 1, `read_at` = ? 
+            WHERE `user_id` = ? AND `is_read` = 0
+        ");
+        return $stmt->execute([date('Y-m-d H:i:s'), $userId]);
+    } catch (Exception $e) {
+        error_log("Error marking all notifications read: " . $e->getMessage());
+        return false;
     }
-    
-    if ($updated) {
-        $userData['notifications'] = $notifications;
-        return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    }
-    return false;
 }
 
 /**
  * Delete notification
  */
 function deleteNotification($notificationId, $userId) {
-    $notificationsFile = DATA_PATH . 'notifications.json';
-    if (!file_exists($notificationsFile)) return false;
-    
-    $notifications = json_decode(file_get_contents($notificationsFile), true);
-    $filtered = array_filter($notifications, function($n) use ($notificationId, $userId) {
-        return !($n['id'] === $notificationId && $n['user_id'] === $userId);
-    });
-    
-    if (count($filtered) !== count($notifications)) {
-        return file_put_contents($notificationsFile, json_encode(array_values($filtered), JSON_PRETTY_PRINT));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            DELETE FROM `notifications` 
+            WHERE `id` = ? AND `user_id` = ?
+        ");
+        return $stmt->execute([$notificationId, $userId]);
+    } catch (Exception $e) {
+        error_log("Error deleting notification: " . $e->getMessage());
+        return false;
     }
-    return false;
 }
 
 /**

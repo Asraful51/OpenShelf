@@ -148,34 +148,27 @@ function updateUserLists($userId, $bookId, $action) {
  * Create notification
  */
 function createNotification($userId, $type, $title, $message, $link) {
-    $userFile = dirname(__DIR__) . '/users/' . $userId . '.json';
-    if (!file_exists($userFile)) return false;
-    
-    $userData = json_decode(file_get_contents($userFile), true);
-    $notifications = $userData['notifications'] ?? [];
-    
-    $notifications[] = [
-        'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-        'user_id' => $userId,
-        'type' => $type,
-        'title' => $title,
-        'message' => $message,
-        'link' => $link,
-        'is_read' => false,
-        'created_at' => date('Y-m-d H:i:s'),
-        'expires_at' => date('Y-m-d H:i:s', strtotime('+30 days'))
-    ];
-    
-    // Sort by created_at desc
-    usort($notifications, function($a, $b) {
-        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
-    });
-    
-    // Limit to 25
-    $notifications = array_slice($notifications, 0, 25);
-    
-    $userData['notifications'] = $notifications;
-    return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("
+            INSERT INTO `notifications` 
+            (id, user_id, type, title, message, link, is_read, created_at, expires_at) 
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)
+        ");
+        return $stmt->execute([
+            'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
+            $userId,
+            $type,
+            $title,
+            $message,
+            $link,
+            date('Y-m-d H:i:s'),
+            date('Y-m-d H:i:s', strtotime('+30 days'))
+        ]);
+    } catch (Exception $e) {
+        error_log("Error creating notification: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**
