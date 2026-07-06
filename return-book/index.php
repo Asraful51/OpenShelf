@@ -70,7 +70,7 @@ function loadUserData($userId) {
 }
 
 /**
- * Update request status to returned
+ * Update request status — supports 'pending_return' and 'returned'
  */
 function updateRequestStatus($requestId, $status, $additionalData = []) {
     $request = loadRequest($requestId);
@@ -79,36 +79,51 @@ function updateRequestStatus($requestId, $status, $additionalData = []) {
     $db = getDB();
     
     $history = $request['history'] ?? [];
+    $actionLabel = ($status === 'pending_return') ? 'return_filed' : 'returned';
     $history[] = [
-        'action' => 'returned',
+        'action'    => $actionLabel,
         'timestamp' => date('Y-m-d H:i:s'),
-        'user_id' => $GLOBALS['currentUserId'],
+        'user_id'   => $GLOBALS['currentUserId'],
         'user_name' => $GLOBALS['currentUserName'],
-        'notes' => $additionalData['notes'] ?? '',
+        'notes'     => $additionalData['notes'] ?? '',
         'condition' => $additionalData['return_condition'] ?? 'same',
-        'rating' => $additionalData['rating'] ?? 0
+        'rating'    => $additionalData['rating'] ?? 0
     ];
     
     // Base SQL
-    $sql = "UPDATE borrow_requests SET status = :status, history = :history, updated_at = :updated_at";
-    
+    $sql    = "UPDATE borrow_requests SET status = :status, history = :history, updated_at = :updated_at";
     $params = [
-        ':status' => $status,
-        ':history' => json_encode($history),
+        ':status'     => $status,
+        ':history'    => json_encode($history),
         ':updated_at' => date('Y-m-d H:i:s'),
-        ':id' => $requestId
+        ':id'         => $requestId
     ];
     
-    if ($status === 'returned') {
-        $sql .= ", returned_at = :returned_at, actual_return_date = :actual_return_date, notes = :notes, return_condition = :return_condition, returned_by = :returned_by, returned_by_name = :returned_by_name, rating = :rating";
-        
-        $params[':returned_at'] = date('Y-m-d H:i:s');
+    if ($status === 'pending_return') {
+        // Borrower has filed the return — awaiting owner confirmation
+        $sql .= ", returned_at = :returned_at, actual_return_date = :actual_return_date,
+                   notes = :notes, return_condition = :return_condition,
+                   returned_by = :returned_by, returned_by_name = :returned_by_name, rating = :rating,
+                   return_confirmation_token = :token,
+                   return_confirmation_status = 'pending_owner',
+                   return_confirmation_sent_at = :sent_at";
+
+        $params[':returned_at']        = date('Y-m-d H:i:s');
         $params[':actual_return_date'] = date('Y-m-d H:i:s');
-        $params[':notes'] = $additionalData['notes'] ?? null;
-        $params[':return_condition'] = $additionalData['return_condition'] ?? null;
-        $params[':returned_by'] = $additionalData['returned_by'] ?? null;
-        $params[':returned_by_name'] = $additionalData['returned_by_name'] ?? null;
-        $params[':rating'] = $additionalData['rating'] ?? 0;
+        $params[':notes']              = $additionalData['notes'] ?? null;
+        $params[':return_condition']   = $additionalData['return_condition'] ?? null;
+        $params[':returned_by']        = $additionalData['returned_by'] ?? null;
+        $params[':returned_by_name']   = $additionalData['returned_by_name'] ?? null;
+        $params[':rating']             = $additionalData['rating'] ?? 0;
+        $params[':token']              = $additionalData['confirmation_token'];
+        $params[':sent_at']            = date('Y-m-d H:i:s');
+
+    } elseif ($status === 'returned') {
+        // Owner confirmed physical receipt
+        $sql .= ", return_confirmation_status = 'confirmed',
+                   return_confirmed_at = :confirmed_at";
+
+        $params[':confirmed_at'] = date('Y-m-d H:i:s');
     }
     
     $sql .= " WHERE id = :id";
@@ -282,9 +297,9 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    $notes = trim($_POST['notes'] ?? '');
-    $condition = trim($_POST['condition'] ?? 'same');
-    $rating = intval($_POST['rating'] ?? 0);
+    $notes            = trim($_POST['notes'] ?? '');
+    $condition        = trim($_POST['condition'] ?? 'same');
+    $rating           = intval($_POST['rating'] ?? 0);
     $damageDescription = trim($_POST['damage_description'] ?? '');
     
     // Validate condition
@@ -293,96 +308,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($error)) {
-        // Update request status
+        // Generate a secure confirmation token for the owner
+        $confirmationToken = bin2hex(random_bytes(32)); // 64-char hex
+
         $additionalData = [
-            'notes' => $notes,
-            'return_condition' => $condition,
-            'returned_by' => $currentUserId,
-            'returned_by_name' => $currentUserName,
-            'rating' => $rating
+            'notes'              => $notes,
+            'return_condition'   => $condition,
+            'returned_by'        => $currentUserId,
+            'returned_by_name'   => $currentUserName,
+            'rating'             => $rating,
+            'confirmation_token' => $confirmationToken,
         ];
         
         if ($condition === 'damaged') {
             $additionalData['damage_description'] = $damageDescription;
         }
         
-        if (updateRequestStatus($requestId, 'returned', $additionalData)) {
-            
-            // Update book status to available
-            updateBookStatus($request['book_id'], 'available');
+        // Set status to 'pending_return' — owner must confirm physical receipt
+        if (updateRequestStatus($requestId, 'pending_return', $additionalData)) {
 
-            // Reset wishlist notified flags so the cron job will email
-            // the first person who added this book to their wishlist.
-            try {
-                $db = getDB();
-                $db->prepare("UPDATE wishlist SET notified = 0, updated_at = ? WHERE book_id = ?")
-                   ->execute([date('Y-m-d H:i:s'), $request['book_id']]);
-            } catch (Exception $e) {
-                error_log("⚠️ Failed to reset wishlist notified flags for book {$request['book_id']}: " . $e->getMessage());
-            }
-            
-            // Update borrower's list (remove from currently borrowed)
-            updateUserBorrowedList($request['borrower_id'], $request['book_id'], 'remove');
-            
-            // Update owner's lent list (remove from currently lent)
-            updateOwnerLentList($request['owner_id'], $request['book_id'], 'remove');
-            
-            // Create notification for owner
+            // Notify owner in-app
             createNotification(
                 $request['owner_id'],
-                'book_returned',
-                'Book Returned',
-                $currentUserName . ' has returned "' . $request['book_title'] . '"',
-                '/requests/?id=' . $requestId
+                'return_pending',
+                'Book Return Awaiting Confirmation',
+                $currentUserName . ' has filed a return for "' . $request['book_title'] . '". Please confirm physical receipt.',
+                '/confirm-return/?token=' . $confirmationToken
             );
-            
-            // Create notification for borrower (if not the same as current user)
-            if ($currentUserId !== $request['borrower_id']) {
-                createNotification(
-                    $request['borrower_id'],
-                    'return_confirmed',
-                    'Return Confirmed',
-                    'Your return of "' . $request['book_title'] . '" has been confirmed',
-                    '/requests/?id=' . $requestId
-                );
-            }
-            
-            $_SESSION['success'] = 'Book returned successfully!';
-            
-            // Send return confirmation emails
-            if ($mailer) {
-                $returnDate = date('Y-m-d');
-                
-                // Email to owner
-                if (!empty($owner['personal_info']['email'])) {
-                    try {
-                        $mailer->sendTemplate(
-                            $owner['personal_info']['email'],
-                            $owner['personal_info']['name'] ?? $request['owner_name'],
-                            'book_returned_owner',
-                            [
-                                'subject'       => "\"{$request['book_title']}\" Has Been Returned",
-                                'owner_name'    => $owner['personal_info']['name'] ?? $request['owner_name'],
-                                'book_title'    => $request['book_title'],
-                                'return_date'   => $returnDate,
-                                'borrower_name' => $request['borrower_name'] ?? $currentUserName,
-                                'book_id'       => $request['book_id'],
-                                'base_url'      => BASE_URL
-                            ]
-                        );
-                        error_log("✅ Return email sent to owner: " . $owner['personal_info']['email']);
-                    } catch (Exception $e) {
-                        error_log("❌ Failed to send return email to owner: " . $e->getMessage());
-                    }
+
+            // Send confirmation email to owner
+            $confirmUrl = BASE_URL . '/confirm-return/?token=' . $confirmationToken;
+            $rejectUrl  = BASE_URL . '/confirm-return/?token=' . $confirmationToken . '&action=reject';
+
+            if ($mailer && !empty($owner['personal_info']['email'])) {
+                try {
+                    $mailer->sendTemplate(
+                        $owner['personal_info']['email'],
+                        $owner['personal_info']['name'] ?? $request['owner_name'],
+                        'book_returned_owner',
+                        [
+                            'subject'        => 'Action Required: Confirm Return of "' . $request['book_title'] . '"',
+                            'owner_name'     => $owner['personal_info']['name'] ?? $request['owner_name'],
+                            'book_title'     => $request['book_title'],
+                            'return_date'    => date('Y-m-d'),
+                            'borrower_name'  => $request['borrower_name'] ?? $currentUserName,
+                            'book_id'        => $request['book_id'],
+                            'confirm_url'    => $confirmUrl,
+                            'reject_url'     => $rejectUrl,
+                            'return_condition' => $condition,
+                            'return_notes'   => $notes,
+                            'base_url'       => BASE_URL,
+                            'type'           => 'warning',
+                        ]
+                    );
+                    error_log("✅ Return confirmation email sent to owner: " . $owner['personal_info']['email']);
+                } catch (Exception $e) {
+                    error_log("❌ Failed to send return confirmation email to owner: " . $e->getMessage());
                 }
             }
-            
-            // Redirect based on who returned
-            if ($isBorrower) {
-                header('Location: /requests/');
-            } else {
-                header('Location: /requests/?id=' . $requestId);
-            }
+
+            $_SESSION['success'] = '✅ Return filed! The book owner has been notified and must confirm physical receipt before it is marked as returned.';
+
+            header('Location: /requests/');
             exit;
             
         } else {
@@ -972,11 +959,15 @@ $coverImage = !empty($book['cover_image']) ? '/uploads/book_cover/thumb_' . $boo
                     </div>
                     <div class="timeline-line active"></div>
                     <div class="timeline-step active">
-                        <span class="timeline-step-num">2</span> Return Details
+                        <span class="timeline-step-num">2</span> File Return
                     </div>
                     <div class="timeline-line"></div>
                     <div class="timeline-step">
-                        <span class="timeline-step-num">3</span> Complete
+                        <span class="timeline-step-num">3</span> Owner Confirms
+                    </div>
+                    <div class="timeline-line"></div>
+                    <div class="timeline-step">
+                        <span class="timeline-step-num">4</span> Complete
                     </div>
                 </div>
 
@@ -1132,10 +1123,20 @@ $coverImage = !empty($book['cover_image']) ? '/uploads/book_cover/thumb_' . $boo
                                 </div>
                             </div>
                             
+                            <!-- Info banner: owner confirmation step -->
+                            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-md);padding:var(--space-md);margin-bottom:var(--space-md);display:flex;gap:var(--space-sm);align-items:flex-start;">
+                                <i class="fas fa-info-circle" style="color:#f59e0b;margin-top:2px;flex-shrink:0;"></i>
+                                <div style="font-size:var(--font-size-sm);color:var(--text-secondary);">
+                                    <strong style="color:var(--text-primary);">Two-step return process</strong><br>
+                                    Submitting this form will notify the <strong>book owner</strong> by email.
+                                    The book will be marked <em>Available</em> only after the owner confirms physical receipt.
+                                </div>
+                            </div>
+
                             <!-- Form Buttons -->
                             <div class="form-actions">
-                                <button type="submit" class="btn">
-                                    <i class="fas fa-check-circle"></i> Confirm Book Return
+                                <button type="submit" class="btn" id="submitReturnBtn">
+                                    <i class="fas fa-paper-plane"></i> Submit Return Request
                                 </button>
                                 <a href="/requests/" class="btn btn-cancel">
                                     Cancel

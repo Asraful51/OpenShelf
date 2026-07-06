@@ -103,6 +103,13 @@ CREATE TABLE IF NOT EXISTS `borrow_requests` (
   `returned_by` varchar(50) DEFAULT NULL,
   `returned_by_name` varchar(255) DEFAULT NULL,
   `rating` int(11) DEFAULT 0,
+  -- Return confirmation (two-step return flow)
+  `return_confirmation_token` varchar(64) DEFAULT NULL COMMENT 'Secure token emailed to owner',
+  `return_confirmation_status` varchar(20) DEFAULT NULL COMMENT 'pending_owner | confirmed | rejected',
+  `return_confirmation_sent_at` datetime DEFAULT NULL,
+  `return_confirmed_at` datetime DEFAULT NULL,
+  `return_rejected_at` datetime DEFAULT NULL,
+  `return_reject_reason` text DEFAULT NULL,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `book_id` (`book_id`),
@@ -279,3 +286,25 @@ CREATE TABLE IF NOT EXISTS `remember_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 COMMIT;
+
+-- --------------------------------------------------------
+-- Table structure for table `wishlist`
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wishlist` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(16) NOT NULL,
+  `book_id` varchar(10) NOT NULL,
+  `notified` tinyint(1) DEFAULT 0,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_book` (`user_id`,`book_id`),
+  KEY `book_id` (`book_id`),
+  CONSTRAINT `fk_wishlist_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wishlist_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Index for fast token lookup on return confirmations
+ALTER TABLE `borrow_requests`
+    ADD KEY IF NOT EXISTS `idx_return_token` (`return_confirmation_token`);
