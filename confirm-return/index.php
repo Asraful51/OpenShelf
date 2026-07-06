@@ -73,21 +73,100 @@ if (!isset($pageError) && !isset($alreadyDone) && $_SERVER['REQUEST_METHOD'] ===
     $borrower = getUserById($req['borrower_id']);
     $owner    = getUserById($req['owner_id']);
 
+    // Load user lists update helpers
+    define('USERS_PATH', dirname(__DIR__) . '/users/');
+    
+    function updateUserBorrowedList($userId, $bookId) {
+        $userFile = USERS_PATH . $userId . '.json';
+        if (!file_exists($userFile)) return false;
+        
+        $userData = json_decode(file_get_contents($userFile), true);
+        
+        if (isset($userData['currently_borrowed'])) {
+            $userData['currently_borrowed'] = array_values(array_filter(
+                $userData['currently_borrowed'],
+                function($id) use ($bookId) { return $id !== $bookId; }
+            ));
+            $userData['stats']['books_borrowed'] = count($userData['currently_borrowed']);
+        }
+        
+        // Add to borrow history
+        if (!isset($userData['borrow_history'])) {
+            $userData['borrow_history'] = [];
+        }
+        $userData['borrow_history'][] = [
+            'book_id' => $bookId,
+            'returned_at' => date('Y-m-d H:i:s'),
+            'status' => 'completed'
+        ];
+        
+        return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT));
+    }
+
+    function updateOwnerLentList($userId, $bookId, $borrowerId) {
+        $userFile = USERS_PATH . $userId . '.json';
+        if (!file_exists($userFile)) return false;
+        
+        $userData = json_decode(file_get_contents($userFile), true);
+        
+        if (isset($userData['currently_lent'])) {
+            $userData['currently_lent'] = array_values(array_filter(
+                $userData['currently_lent'],
+                function($id) use ($bookId) { return $id !== $bookId; }
+            ));
+            $userData['stats']['books_lent'] = count($userData['currently_lent']);
+        }
+        
+        // Add to lent history
+        if (!isset($userData['lent_history'])) {
+            $userData['lent_history'] = [];
+        }
+        $userData['lent_history'][] = [
+            'book_id' => $bookId,
+            'returned_at' => date('Y-m-d H:i:s'),
+            'returned_by' => $borrowerId
+        ];
+        
+        // Sort lent_history by date desc and limit to 25
+        usort($userData['lent_history'], function($a, $b) {
+            $dateA = $a['returned_at'] ?? $a['date'] ?? '1970-01-01';
+            $dateB = $b['returned_at'] ?? $b['date'] ?? '1970-01-01';
+            return strtotime($dateB) <=> strtotime($dateA);
+        });
+        $userData['lent_history'] = array_slice($userData['lent_history'], 0, 25);
+        
+        return file_put_contents($userFile, json_encode($userData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
     if ($postedAction === 'confirm') {
         // ── CONFIRM ──────────────────────────────────────────────────────────
+        $history = json_decode($req['history'] ?? '[]', true);
+        $history[] = [
+            'action' => 'return_confirmed',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_id' => $req['owner_id'],
+            'user_name' => $req['owner_name'],
+            'notes' => 'Owner confirmed physical receipt'
+        ];
+
         $db->prepare("
             UPDATE borrow_requests
             SET status = 'returned',
                 return_confirmation_status = 'confirmed',
                 return_confirmed_at = ?,
                 return_confirmation_token = NULL,
+                history = ?,
                 updated_at = ?
             WHERE id = ?
-        ")->execute([date('Y-m-d H:i:s'), date('Y-m-d H:i:s'), $req['id']]);
+        ")->execute([date('Y-m-d H:i:s'), json_encode($history), date('Y-m-d H:i:s'), $req['id']]);
 
         // Make book available
         $db->prepare("UPDATE books SET status = 'available', updated_at = ? WHERE id = ?")
            ->execute([date('Y-m-d H:i:s'), $req['book_id']]);
+
+        // Update JSON lists
+        updateUserBorrowedList($req['borrower_id'], $req['book_id']);
+        updateOwnerLentList($req['owner_id'], $req['book_id'], $req['borrower_id']);
 
         // Reset wishlist notified flags
         try {
@@ -131,14 +210,26 @@ if (!isset($pageError) && !isset($alreadyDone) && $_SERVER['REQUEST_METHOD'] ===
 
     } else {
         // ── REJECT ───────────────────────────────────────────────────────────
+        $history = json_decode($req['history'] ?? '[]', true);
+        $history[] = [
+            'action' => 'return_rejected',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_id' => $req['owner_id'],
+            'user_name' => $req['owner_name'],
+            'notes' => $rejectReason ?: 'Owner indicated they did not physically receive the book'
+        ];
+
         $db->prepare("
             UPDATE borrow_requests
-            SET return_confirmation_status = 'rejected',
+            SET status = 'approved',
+                return_confirmation_status = 'rejected',
                 return_rejected_at = ?,
                 return_reject_reason = ?,
+                return_confirmation_token = NULL,
+                history = ?,
                 updated_at = ?
             WHERE id = ?
-        ")->execute([date('Y-m-d H:i:s'), $rejectReason, date('Y-m-d H:i:s'), $req['id']]);
+        ")->execute([date('Y-m-d H:i:s'), $rejectReason, json_encode($history), date('Y-m-d H:i:s'), $req['id']]);
 
         // Keep book as 'borrowed' (no change to books table)
 
