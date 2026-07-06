@@ -243,26 +243,6 @@ function sendRejectionEmail($borrowerEmail, $borrowerName, $bookTitle, $reason, 
 }
 
 
-/**
- * Send return confirmation email to owner
- */
-function sendReturnEmailToOwner($ownerEmail, $ownerName, $bookTitle, $returnDate, $borrowerName, $requestId, $bookId = '') {
-    return sendEmail(
-        $ownerEmail,
-        $ownerName,
-        'book_returned_owner',
-        [
-            'subject'       => "\"$bookTitle\" Has Been Returned",
-            'owner_name'    => $ownerName,
-            'book_title'    => $bookTitle,
-            'return_date'   => $returnDate,
-            'borrower_name' => $borrowerName,
-            'request_id'    => $requestId,
-            'book_id'       => $bookId,
-            'base_url'      => BASE_URL
-        ]
-    );
-}
 
 /**
  * Format date
@@ -304,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (!$request) {
         $error = 'Request not found';
-    } elseif ($request['owner_id'] !== $currentUserId && $action !== 'return_book') {
+    } elseif ($request['owner_id'] !== $currentUserId) {
         $error = 'You do not have permission to modify this request';
     } else {
         
@@ -402,70 +382,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Failed to reject request';
             }
             
-        } elseif ($action === 'return_book') {
-            $notes = trim($_POST['notes'] ?? '');
-            $condition = trim($_POST['condition'] ?? 'same');
-            
-            $updated = updateRequestStatus($requestId, 'returned', [
-                'notes' => $notes,
-                'condition' => $condition,
-                'returned_by' => $currentUserId
-            ]);
-            
-            if ($updated) {
-                // Update book status to available
-                updateBookStatus($request['book_id'], 'available');
-                
-                // Update user lists (remove from borrowed/lent)
-                updateUserLists($request['borrower_id'], $request['book_id'], 'remove_borrowed');
-                updateUserLists($request['owner_id'], $request['book_id'], 'remove_lent');
-                
-                // Get user data
-                $borrower = loadUserData($request['borrower_id']);
-                $owner = loadUserData($request['owner_id']);
-                $returnDate = date('Y-m-d');
-                
-                // Create in-app notifications
-                createNotification(
-                    $request['owner_id'],
-                    'book_returned',
-                    'Book Returned',
-                    $currentUserName . ' has returned "' . $request['book_title'] . '"',
-                    "/requests/?id={$requestId}"
-                );
-                
-                createNotification(
-                    $request['borrower_id'],
-                    'return_confirmed',
-                    'Return Confirmed',
-                    'Your return of "' . $request['book_title'] . '" has been confirmed',
-                    "/requests/?id={$requestId}"
-                );
-                
-                
-                // Send return confirmation email to owner
-                if (!empty($owner['personal_info']['email'])) {
-                    $emailSent = sendReturnEmailToOwner(
-                        $owner['personal_info']['email'],
-                        $owner['personal_info']['name'] ?? $request['owner_name'],
-                        $request['book_title'],
-                        $returnDate,
-                        $request['borrower_name'] ?? $currentUserName,
-                        $requestId,
-                        $request['book_id']
-                    );
-                    
-                    if ($emailSent) {
-                        error_log("✅ Return email sent to owner: " . $owner['personal_info']['email']);
-                    } else {
-                        error_log("❌ Failed to send return email to owner: " . $owner['personal_info']['email']);
-                    }
-                }
-                
-                $message = 'Book returned successfully';
-            } else {
-                $error = 'Failed to return book';
-            }
         }
         
         // Reload data
@@ -506,19 +422,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .request-card { background: white; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: all 0.2s; }
         .request-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
-        .request-card.pending { border-left: 4px solid #D97706; }
-        .request-card.approved { border-left: 4px solid #2E8B57; }
-        .request-card.rejected { border-left: 4px solid #C65D5D; }
-        .request-card.returned { border-left: 4px solid #2C3E50; }
+        .request-card.pending         { border-left: 4px solid #D97706; }
+        .request-card.approved         { border-left: 4px solid #2E8B57; }
+        .request-card.rejected         { border-left: 4px solid #C65D5D; }
+        .request-card.returned         { border-left: 4px solid #2C3E50; }
+        .request-card.pending_return   { border-left: 4px solid #f59e0b; }
         .request-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
         .book-title { font-size: 1.1rem; font-weight: 600; }
         .book-title a { color: inherit; text-decoration: none; }
         .book-title a:hover { color: #4C9F8A; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; }
-        .status-pending { background: rgba(217, 119, 6, 0.1); color: #D97706; }
-        .status-approved { background: rgba(46, 139, 87, 0.1); color: #2E8B57; }
-        .status-rejected { background: rgba(198, 93, 93, 0.1); color: #C65D5D; }
-        .status-returned { background: rgba(44, 62, 80, 0.1); color: #2C3E50; }
+        .status-pending         { background: rgba(217, 119, 6, 0.1); color: #D97706; }
+        .status-approved        { background: rgba(46, 139, 87, 0.1); color: #2E8B57; }
+        .status-rejected        { background: rgba(198, 93, 93, 0.1); color: #C65D5D; }
+        .status-returned        { background: rgba(44, 62, 80, 0.1); color: #2C3E50; }
+        .status-pending_return  { background: rgba(245,158,11,0.12); color: #b45309; }
         .request-meta { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.75rem; }
         .meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #475569; }
         .meta-item i { width: 18px; color: #4C9F8A; }
@@ -624,19 +542,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php if ($request['status'] === 'rejected' && !empty($request['rejection_reason'])): ?><div class="request-message" style="border-left-color:#ef4444;"><i class="fas fa-times-circle" style="color:#ef4444;margin-right:0.5rem;"></i><strong>Reason:</strong> <?php echo htmlspecialchars($request['rejection_reason']); ?></div><?php endif; ?>
                         <div class="request-actions">
                             <?php if ($request['status'] === 'approved'): ?>
-                                <form method="POST" id="returnForm_<?php echo $request['id']; ?>" style="display: inline;">
-                                    <input type="hidden" name="action" value="return_book">
-                                    <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
-                                    <input type="hidden" name="condition" value="same">
-                                    <button type="submit" class="btn btn-success" onclick="return confirm('Confirm return of this book?')">
-                                        <i class="fas fa-undo-alt"></i> Return Book
-                                    </button>
-                                </form>
+                                <a href="/return-book/?id=<?php echo urlencode($request['id']); ?>" class="btn btn-success">
+                                    <i class="fas fa-undo-alt"></i> Return Book
+                                </a>
                                 <?php if (!empty($owner['personal_info']['phone'])): ?>
                                     <a href="https://wa.me/88<?php echo preg_replace('/[^0-9]/', '', $owner['personal_info']['phone']); ?>" target="_blank" class="btn btn-outline" style="border-color:#25D366;color:#25D366;">
                                         <i class="fab fa-whatsapp"></i> Contact Owner
                                     </a>
                                 <?php endif; ?>
+                            <?php elseif ($request['status'] === 'pending_return'): ?>
+                                <div style="width:100%;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:0.6rem 0.9rem;font-size:0.82rem;color:#92400e;display:flex;align-items:center;gap:0.5rem;">
+                                    <i class="fas fa-hourglass-half" style="color:#f59e0b;"></i>
+                                    <span><strong>Awaiting owner confirmation</strong> — The owner has been notified by email to confirm physical receipt.</span>
+                                </div>
                             <?php endif; ?>
                             <a href="/book/?id=<?php echo $request['book_id']; ?>" class="btn btn-outline"><i class="fas fa-book"></i> View Book</a>
                         </div>

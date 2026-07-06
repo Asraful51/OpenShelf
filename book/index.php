@@ -1091,6 +1091,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
     }
     .btn-wishlist:hover .wishlist-tooltip { opacity: 1; }
 
+    .modal-card {
+        background: var(--surface-solid, #ffffff);
+        border-radius: var(--radius-xl, 24px);
+        max-width: 500px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 2rem;
+        border: 1px solid var(--border, #e2e8f0);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        animation: modalSlideUp 0.3s ease;
+    }
+
     /* Dark Mode Overrides */
     :root[data-theme="dark"] {
         --bg: #0f172a;
@@ -1111,6 +1124,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
     [data-theme="dark"] .form-control { background: #0f172a; border-color: #334155; color: #f8fafc; }
     [data-theme="dark"] .modal-card { background: #1e293b; }
     [data-theme="dark"] .entry-text { color: #cbd5e1; }
+    .borrow-card {
+        background: var(--surface-solid, #ffffff);
+        border: 1px solid var(--border, #e2e8f0);
+        border-radius: var(--radius-md, 12px);
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--shadow-premium, 0 10px 30px -10px rgba(0,0,0,0.05));
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .borrow-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border, #e2e8f0);
+        padding-bottom: 0.75rem;
+    }
+    .card-status-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-muted, #64748b);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .card-status-label.available {
+        color: var(--primary, #4c9f8a);
+    }
+    .card-status-label.unavailable {
+        color: #ef4444;
+    }
 </style>
 
 <div class="book-detail">
@@ -1194,8 +1240,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
                     </a>
                 </div>
 
-                <!-- 2. Action Buttons -->
-                <div class="action-section">
+                <!-- 2. Action Card -->
+                <div class="action-section borrow-card">
+                    <div class="borrow-card-header">
+                        <?php if ($isOwner): ?>
+                            <span class="card-status-label"><i class="fas fa-user-cog"></i> Listing Owner</span>
+                        <?php elseif ($book['status'] === 'available'): ?>
+                            <span class="card-status-label available"><i class="fas fa-check-circle"></i> Available to Borrow</span>
+                        <?php else: ?>
+                            <span class="card-status-label unavailable"><i class="fas fa-info-circle"></i> Currently Unavailable</span>
+                        <?php endif; ?>
+                    </div>
                     <div class="action-group">
                         <?php if ($isOwner): ?>
                             <a href="/edit-book/?id=<?php echo $bookId; ?>" class="btn btn-primary">
@@ -1214,7 +1269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
                                 </a>
                             <?php endif; ?>
                         <?php elseif ($hasRequested): ?>
-                            <button class="btn btn-secondary" disabled style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; cursor: not-allowed;">
+                            <button class="btn btn-secondary" disabled style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; cursor: not-allowed; flex:1;">
                                 <i class="fas fa-clock"></i> Request Pending
                             </button>
                             <a href="/requests/" class="btn btn-outline">Manage Requests</a>
@@ -1223,7 +1278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
                                 Join to Borrow
                             </a>
                         <?php else: ?>
-                            <button class="btn btn-secondary" disabled style="cursor: not-allowed;">
+                            <button class="btn btn-secondary" disabled style="cursor: not-allowed; flex:1;">
                                 <i class="fas fa-lock"></i> Currently Unavailable
                             </button>
                         <?php endif; ?>
