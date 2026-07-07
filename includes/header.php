@@ -79,13 +79,264 @@ $fullAvatarPath = dirname(__DIR__) . '/uploads/profile/' . $userAvatar;
 if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
     $avatarPath = $defaultAvatar;
 }
+
+// ==========================================
+// DYNAMIC SEO ENGINE FOR OPENSHELF
+// ==========================================
+$siteName = "OpenShelf";
+$defaultTitle = "OpenShelf - Share Books, Share Knowledge";
+$defaultDesc = "OpenShelf is a student-led, peer-to-peer book sharing platform. Share and borrow textbooks, novels, and guides within your campus community for free.";
+$defaultKeywords = "book sharing, university library, campus books, borrow books, free books, peer-to-peer, OpenShelf, DU OpenShelf, book exchange";
+$defaultImage = "/assets/images/pwa/icon-192x192.png";
+
+// Get protocol and host for absolute URLs
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
+$host = $_SERVER['HTTP_HOST'] ?? 'duopenshelf.top';
+$baseUrl = $protocol . "://" . $host;
+
+// Dynamic rating values for structured data, initialized to safe defaults to satisfy static code analysis
+$seoRatingCount = 0;
+$seoAvgRating = "0.0";
+
+// Detect current page file to set automatic, smart defaults
+$selfPath = $_SERVER['PHP_SELF'] ?? '';
+$currentUri = $_SERVER['REQUEST_URI'] ?? '';
+
+// Check if we are on a book detail page and have a $book variable loaded
+if (isset($book) && is_array($book) && !empty($book['title'])) {
+    $seoTitle = htmlspecialchars($book['title']) . " by " . htmlspecialchars($book['author']) . " | " . $siteName;
+    $seoDesc = !empty($book['description']) 
+        ? mb_strimwidth(strip_tags($book['description']), 0, 155, "...") 
+        : "Borrow " . htmlspecialchars($book['title']) . " by " . htmlspecialchars($book['author']) . " on OpenShelf for free. Connect with campus students.";
+    $seoKeywords = htmlspecialchars($book['title']) . ", " . htmlspecialchars($book['author']) . ", " . htmlspecialchars($book['category'] ?? '') . ", borrow books, free books, OpenShelf";
+    
+    // Resolve Cover Image
+    if (!empty($book['cover_image'])) {
+        $seoImage = $baseUrl . "/uploads/book_cover/" . $book['cover_image'];
+    } else {
+        $seoImage = $baseUrl . $defaultImage;
+    }
+    $seoOgType = "book";
+
+    // Dynamic rating values for structured data, defaulting to safe values to prevent undefined variable errors
+    $seoRatingCount = isset($ratingCount) ? $ratingCount : ($book['rating_count'] ?? 0);
+    $seoAvgRating = isset($avgRating) ? $avgRating : number_format($book['rating'] ?? 0, 1);
+} else {
+    // Determine page-specific defaults if variables are not explicitly set
+    $autoTitle = "";
+    $autoDesc = "";
+    $autoKeywords = "";
+
+    if (strpos($selfPath, '/books/') !== false) {
+        $autoTitle = "Explore Shared Books";
+        $autoDesc = "Browse and search through hundreds of books shared by fellow students on OpenShelf. Borrow academic textbooks, novels, literature, and more for free.";
+        $autoKeywords = "book list, browse books, borrow textbooks, academic books, novels, free reading";
+    } elseif (strpos($selfPath, '/feed/') !== false) {
+        $autoTitle = "Community Book Activity Feed";
+        $autoDesc = "See the latest book sharing activities, new uploads, and updates from the OpenShelf campus community.";
+    } elseif (strpos($selfPath, '/announcements/') !== false) {
+        $autoTitle = "Campus Announcements";
+        $autoDesc = "Stay updated with the latest library updates, notifications, and platform news from the OpenShelf team.";
+    } elseif (strpos($selfPath, '/notifications/') !== false) {
+        $autoTitle = "My Notifications";
+        $autoDesc = "Manage your borrow requests, returns, and wishlist notifications on OpenShelf.";
+    } elseif (strpos($selfPath, '/settings/') !== false) {
+        $autoTitle = "Account Settings";
+        $autoDesc = "Manage your OpenShelf profile details, library preferences, and security settings.";
+    } elseif (strpos($selfPath, '/support_us/') !== false) {
+        $autoTitle = "Support Our Mission";
+        $autoDesc = "Support OpenShelf and help us keep the platform running. Help us make university education more affordable through free book sharing.";
+    } elseif (strpos($selfPath, '/my-borrowed/') !== false) {
+        $autoTitle = "My Borrowed Books";
+        $autoDesc = "Track your borrowed books, active requests, and book return status on OpenShelf.";
+    } elseif (strpos($selfPath, '/about.php') !== false) {
+        $autoTitle = "About Us - Our Mission";
+        $autoDesc = "Learn more about OpenShelf, our mission to make knowledge accessible, our core campus values, and how student-led book sharing works.";
+        $autoKeywords = "about openshelf, student library, book sharing mission, book exchange project";
+    } elseif (strpos($selfPath, '/faq.php') !== false) {
+        $autoTitle = "Frequently Asked Questions (FAQ)";
+        $autoDesc = "Find quick answers to common questions about borrowing books, returning books, listing books, and security on OpenShelf.";
+        $autoKeywords = "faq, help center, how to borrow books, returning books query";
+    } elseif (strpos($selfPath, '/contact.php') !== false) {
+        $autoTitle = "Contact Support";
+        $autoDesc = "Get in touch with the OpenShelf support team for assistance, feedback, or partnerships.";
+        $autoKeywords = "contact, support, customer care, send message, feedback";
+    } elseif (strpos($selfPath, '/privacy.php') !== false) {
+        $autoTitle = "Privacy Policy";
+        $autoDesc = "Read the OpenShelf Privacy Policy to understand how we collect, use, and protect your personal information.";
+        $autoKeywords = "privacy policy, data protection, personal data security";
+    } elseif (strpos($selfPath, '/terms.php') !== false) {
+        $autoTitle = "Terms of Service";
+        $autoDesc = "Read the OpenShelf Terms of Service and user agreement for our peer-to-peer book sharing platform.";
+        $autoKeywords = "terms of service, legal terms, user agreement";
+    } elseif (strpos($selfPath, '/guidelines.php') !== false) {
+        $autoTitle = "Community Guidelines";
+        $autoDesc = "OpenShelf community guidelines to ensure a safe, respectful, and helpful environment for sharing books on campus.";
+        $autoKeywords = "community guidelines, code of conduct, safe book sharing";
+    } elseif (strpos($selfPath, '/report.php') !== false) {
+        $autoTitle = "Report an Issue";
+        $autoDesc = "Report a bug, user misconduct, or other issues to the OpenShelf administrators.";
+    } elseif (strpos($selfPath, '/index.php') !== false || $selfPath === '/' || $selfPath === '') {
+        $autoTitle = "Share Books, Share Knowledge";
+        $autoDesc = $defaultDesc;
+        $autoKeywords = $defaultKeywords;
+    }
+
+    // Set final title
+    if (isset($pageTitle)) {
+        $seoTitle = htmlspecialchars($pageTitle) . " | " . $siteName;
+    } elseif (!empty($autoTitle)) {
+        $seoTitle = $autoTitle . " | " . $siteName;
+    } else {
+        $seoTitle = $defaultTitle;
+    }
+
+    // Set final description
+    if (isset($metaDescription)) {
+        $seoDesc = htmlspecialchars($metaDescription);
+    } elseif (!empty($autoDesc)) {
+        $seoDesc = $autoDesc;
+    } else {
+        $seoDesc = $defaultDesc;
+    }
+
+    // Set final keywords
+    if (isset($metaKeywords)) {
+        $seoKeywords = htmlspecialchars($metaKeywords);
+    } elseif (!empty($autoKeywords)) {
+        $seoKeywords = $autoKeywords . ", " . $defaultKeywords;
+    } else {
+        $seoKeywords = $defaultKeywords;
+    }
+
+    // Set final image
+    if (isset($metaImage)) {
+        $seoImage = (strpos($metaImage, 'http') === 0) ? $metaImage : $baseUrl . $metaImage;
+    } else {
+        $seoImage = $baseUrl . $defaultImage;
+    }
+
+    $seoOgType = isset($ogType) ? htmlspecialchars($ogType) : "website";
+}
+
+// Canonical URL
+$seoCanonical = isset($canonicalUrl) ? htmlspecialchars($canonicalUrl) : $baseUrl . $_SERVER['REQUEST_URI'];
+
+// Robots Index / Noindex logic
+// Automatically block search engines from indexing sensitive pages
+$noIndexPages = ['/login/', '/register/', '/settings/', '/admin/', '/notifications/', '/requests/', '/borrow-request/', '/return-book/', '/confirm-return/'];
+$isNoIndex = false;
+if (isset($noIndex) && $noIndex === true) {
+    $isNoIndex = true;
+} else {
+    foreach ($noIndexPages as $nip) {
+        if (strpos($currentUri, $nip) !== false) {
+            $isNoIndex = true;
+            break;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>OpenShelf - Share Books, Share Knowledge</title>
+    <title><?php echo $seoTitle; ?></title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="<?php echo $seoDesc; ?>">
+    <meta name="keywords" content="<?php echo $seoKeywords; ?>">
+    <meta name="author" content="OpenShelf">
+    
+    <!-- Robots meta tag for search engine indexing -->
+    <?php if ($isNoIndex): ?>
+    <meta name="robots" content="noindex, nofollow">
+    <?php else: ?>
+    <meta name="robots" content="index, follow">
+    <?php endif; ?>
+
+    <!-- Canonical Link -->
+    <link rel="canonical" href="<?php echo $seoCanonical; ?>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="<?php echo $seoOgType; ?>">
+    <meta property="og:url" content="<?php echo $seoCanonical; ?>">
+    <meta property="og:title" content="<?php echo $seoTitle; ?>">
+    <meta property="og:description" content="<?php echo $seoDesc; ?>">
+    <meta property="og:image" content="<?php echo $seoImage; ?>">
+    <meta property="og:site_name" content="OpenShelf">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<?php echo $seoCanonical; ?>">
+    <meta property="twitter:title" content="<?php echo $seoTitle; ?>">
+    <meta property="twitter:description" content="<?php echo $seoDesc; ?>">
+    <meta property="twitter:image" content="<?php echo $seoImage; ?>">
+
+    <!-- Schema.org Structured Data -->
+    <?php if (isset($book) && is_array($book) && !empty($book['title'])): ?>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": "<?php echo addslashes($book['title']); ?>",
+      "author": {
+        "@type": "Person",
+        "name": "<?php echo addslashes($book['author']); ?>"
+      },
+      "image": "<?php echo $seoImage; ?>",
+      "description": "<?php echo addslashes(strip_tags($seoDesc)); ?>",
+      "genre": "<?php echo addslashes($book['category'] ?? ''); ?>",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "BDT",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Person",
+          "name": "<?php echo addslashes($book['owner_name'] ?? 'OpenShelf Member'); ?>"
+        }
+      }
+      <?php if (isset($seoRatingCount) && $seoRatingCount > 0): ?>,
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "<?php echo $seoAvgRating; ?>",
+        "reviewCount": "<?php echo $seoRatingCount; ?>"
+      }
+      <?php endif; ?>
+    }
+    </script>
+    <?php else: ?>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "OpenShelf",
+      "url": "<?php echo $baseUrl; ?>",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "<?php echo $baseUrl; ?>/books/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "OpenShelf",
+      "url": "<?php echo $baseUrl; ?>",
+      "logo": "<?php echo $baseUrl; ?>/assets/images/pwa/icon-192x192.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+8801987971270",
+        "contactType": "customer service",
+        "email": "support@duopenshelf.top"
+      }
+    }
+    </script>
+    <?php endif; ?>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo-icon.svg">
@@ -107,6 +358,24 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/assets/css/style.css?v=3.0.2">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KJ8R2FCT18"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-KJ8R2FCT18');
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MGWJT89N');</script>
+    <!-- End Google Tag Manager -->
     
     <!-- Theme Init -->
     <script>
@@ -807,6 +1076,10 @@ if (!file_exists($fullAvatarPath) || $userAvatar === 'default-avatar.jpg') {
     </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MGWJT89N"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
 <header class="site-header">
     <div class="header-container">
