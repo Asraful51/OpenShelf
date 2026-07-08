@@ -1,16 +1,15 @@
-/* 
-    Profile Page Premium Styles
-    - Glassmorphism & Modern UI Design
-    - Smooth micro-interactions & animations
-    - Responsive 2-column details & 3-column stats
-*/
+/* ==============================================
+   OpenShelf Profile Page Styles
+   Glassmorphism & Modern UI Design
+   Smooth micro-interactions & animations
+   ============================================== */
 
 :root {
     --glass-bg: rgba(255, 255, 255, 0.75);
     --glass-border: rgba(255, 255, 255, 0.4);
     --glass-blur: blur(16px);
 
-    /* Updated Emerald Green Palette */
+    /* Emerald Green Palette */
     --profile-primary: #10B981;
     --profile-primary-hover: #059669;
     --profile-primary-light: #D1FAE5;
@@ -29,7 +28,6 @@
 }
 
 /* Dark Theme Overrides */
-:root[data-theme="dark"],
 [data-theme="dark"] {
     --glass-bg: rgba(15, 23, 42, 0.75);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -41,6 +39,7 @@
     --profile-accent-light: rgba(92, 133, 176, 0.15);
 }
 
+/* ========== Hero Section ========== */
 .profile-hero {
     height: 150px;
     background: linear-gradient(135deg, #10B981, #06B6D4, #2C3E50);
@@ -52,19 +51,12 @@
 }
 
 @keyframes gradientMove {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
+/* ========== Main Profile Card ========== */
 .profile-container {
     max-width: 850px;
     margin: -100px auto 60px;
@@ -73,7 +65,6 @@
     z-index: 10;
 }
 
-/* Main Card */
 .glass-card {
     background: var(--profile-card-bg);
     backdrop-filter: var(--glass-blur);
@@ -86,13 +77,12 @@
     transform: translateY(15px);
 }
 
-/* Avatar styling */
+/* ========== Avatar ========== */
 .profile-avatar-wrapper {
     position: relative;
     width: 140px;
     height: 140px;
     margin: -80px auto 0.5rem;
-    /* Reduced bottom margin */
     z-index: 5;
 }
 
@@ -110,7 +100,7 @@
     transform: scale(1.05) rotate(2deg);
 }
 
-/* Typography details */
+/* ========== Profile Name & Meta ========== */
 .profile-name {
     font-size: 1.85rem;
     font-weight: 800;
@@ -143,7 +133,6 @@
     font-size: 0.8rem;
     color: var(--gray-500);
     margin-bottom: 0.75rem;
-    /* Reduced from 1.25rem */
 }
 
 .profile-meta .meta-item {
@@ -157,7 +146,6 @@
     color: var(--gray-600);
     max-width: 580px;
     margin: 0 auto 1.25rem;
-    /* Reduced from 2rem */
     font-size: 0.925rem;
     line-height: 1.5;
     background: rgba(0, 0, 0, 0.02);
@@ -180,7 +168,7 @@
     color: var(--gray-400);
 }
 
-/* Stats Row: Must stay 1 Row */
+/* ========== Stats Row ========== */
 .stats-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -223,10 +211,10 @@
     color: var(--gray-500);
 }
 
-/* Info Grid: Must stay 2 columns */
+/* ========== Info Grid ========== */
 .info-grid {
     display: grid;
-    grid-template-columns: 62% 38% !important;
+    grid-template-columns: 62% 38%;
     gap: 0.75rem 1.25rem;
     margin-bottom: 1.75rem;
     padding: 0.25rem 0.15rem;
@@ -320,7 +308,7 @@
     gap: 0.25rem;
 }
 
-/* Consolidated Actions Section */
+/* ========== Action Buttons ========== */
 .profile-actions-wrapper {
     display: flex;
     flex-direction: column;
@@ -424,7 +412,7 @@
     cursor: not-allowed;
 }
 
-/* Tabs UI capsule */
+/* ========== Tabs ========== */
 .profile-tabs {
     display: flex;
     justify-content: center;
@@ -483,14 +471,13 @@
         opacity: 0;
         transform: translateY(15px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-/* Hide/Show responsive wrappers */
+/* ========== Responsive ========== */
 .hide-on-mobile {
     display: block;
 }
@@ -506,5 +493,23 @@
 
     .show-on-mobile {
         display: block;
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+    }
+
+    .stats-row {
+        gap: 0.5rem 0.75rem;
+        padding: 0.75rem 0.25rem;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .action-buttons-row {
+        max-width: 100%;
     }
 }

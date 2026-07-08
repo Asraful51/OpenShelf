@@ -1,44 +1,12 @@
-/* 
- * OpenShelf Admin Master CSS
- * Modern, Mobile-First, Responsive Design
- */
+/* ==============================================
+   OpenShelf Admin Panel Styles
+   Modern, Mobile-First, Responsive Design
+   ============================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --primary: #2C3E50;
-    --primary-dark: #1a252f;
-    --primary-light: #3e5871;
-    --secondary: #4C9F8A;
-    --success: #2E8B57;
-    --warning: #D9A441;
-    --danger: #C65D5D;
-    --info: #4C9F8A;
-    
-    /* Light Mode Tokens */
-    --bg-body: #F8F9FA;
-    --bg-card: #FFFFFF;
-    --bg-sidebar: #2C3E50;
-    --bg-header: rgba(255, 255, 255, 0.85);
-    --text-main: #0F172A;
-    --text-muted: #5A6C7D;
-    --border-color: #E2E8F0;
-    --header-blur: 15px;
-    --sidebar-text: #94a3b8;
-    --sidebar-active-bg: rgba(76, 159, 138, 0.15);
-    --sidebar-active-text: #ffffff;
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
-    
-    --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Admin-specific overrides */
     --sidebar-width: 280px;
 }
 
@@ -56,54 +24,13 @@
     --sidebar-active-text: #4C9F8A;
 }
 
-/* Global Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
-    background: var(--bg-body);
-    color: var(--text-main);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease;
-}
-
-a {
-    text-decoration: none;
-    color: inherit;
-    transition: var(--transition);
-}
-
-ul {
-    list-style: none;
-}
-
-img {
-    max-width: 100%;
-}
-
-button, input, select, textarea {
-    font-family: inherit;
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-/* Layout */
+/* ========== Layout ========== */
 .admin-layout {
     display: flex;
     min-height: 100vh;
 }
 
-/* Sidebar */
+/* ========== Sidebar ========== */
 .admin-sidebar {
     width: var(--sidebar-width);
     background: var(--bg-sidebar);
@@ -204,14 +131,14 @@ h1, h2, h3, h4, h5, h6 {
     color: white;
 }
 
-/* Main Content Area */
+/* ========== Main Content Area ========== */
 .admin-main {
     flex: 1;
     margin-left: var(--sidebar-width);
     transition: var(--transition);
 }
 
-/* Header */
+/* ========== Header ========== */
 .admin-header {
     background: var(--bg-header);
     backdrop-filter: blur(var(--header-blur));
@@ -340,7 +267,7 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 0.5px;
 }
 
-/* Page Content */
+/* ========== Page Content ========== */
 .admin-content {
     padding: 2rem;
     max-width: 1600px;
@@ -348,7 +275,7 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
 }
 
-/* Cards */
+/* ========== Cards ========== */
 .card {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
@@ -376,7 +303,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--text-main);
 }
 
-/* Buttons */
+/* ========== Buttons ========== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -425,7 +352,7 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.875rem;
 }
 
-/* Forms */
+/* ========== Forms ========== */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -455,7 +382,7 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 0 0 4px rgba(44, 62, 80, 0.1);
 }
 
-/* Tables */
+/* ========== Tables ========== */
 .table-responsive {
     overflow-x: auto;
     background: var(--bg-card);
@@ -495,7 +422,7 @@ h1, h2, h3, h4, h5, h6 {
     background: rgba(44, 62, 80, 0.02);
 }
 
-/* Badges */
+/* ========== Badges ========== */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -513,7 +440,7 @@ h1, h2, h3, h4, h5, h6 {
 .badge-info { background: rgba(6, 182, 212, 0.1); color: var(--info); }
 .badge-primary { background: rgba(44, 62, 80, 0.1); color: var(--primary); }
 
-/* Grid System */
+/* ========== Grid System ========== */
 .grid {
     display: grid;
     gap: 1.5rem;
@@ -536,7 +463,7 @@ h1, h2, h3, h4, h5, h6 {
     .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
 }
 
-/* Animations */
+/* ========== Animations ========== */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -546,7 +473,7 @@ h1, h2, h3, h4, h5, h6 {
     animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* Mobile Responsiveness */
+/* ========== Mobile Responsiveness ========== */
 @media (max-width: 1024px) {
     .admin-sidebar {
         transform: translateX(-100%);
@@ -588,7 +515,7 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* Overlay */
+/* ========== Sidebar Overlay ========== */
 .sidebar-overlay {
     position: fixed;
     top: 0;
