@@ -1,113 +1,100 @@
 # 📚 OpenShelf — Community Library Management System
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/Asraf1270/OpenShelf/releases/tag/v3.1.0)
+[![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)](https://github.com/Asraf1270/OpenShelf/releases/tag/v3.2.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4.svg)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1.svg)](https://www.mysql.com/)
+[![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8.svg)](https://web.dev/progressive-web-apps/)
 
-**OpenShelf** is a modern, open-source library management system designed for communities, universities, and book clubs. It empowers users to share, borrow, and manage books effortlessly through a **premium, glassmorphic interface** that feels alive and responsive.
-
----
-
-## 🚀 v3.1.0 — Polish, Performance, and Stability
-
-**Release Date:** June 30, 2026
-
-A polished release focused on faster discovery, improved responsiveness, and stability across both public and admin experiences.
-
-### Highlights
-
-- ✨ **UI Refinements** — Polished book discovery, filter controls, and navigation for a smoother experience.
-- ⚡ **Performance Improvements** — Faster page load and infinite scroll responsiveness throughout the catalog.
-- 🛠️ **Stability Fixes** — Resolved issues across borrow/request workflows, admin reporting, and mobile layouts.
-- 🔒 **PWA & Offline Strengthening** — Improved fallback messaging and reliability for installable usage.
-- 📈 **Quality Enhancements** — Updated visual polish and bug fixes across core user-facing flows.
-
-📄 Full details: [v3.1.0 Release Notes](v3.1.0_release_notes.md)
+**OpenShelf** is a modern, open-source community library management system designed for universities, halls, and book clubs. It empowers users to share, borrow, and manage books effortlessly through a **premium, glassmorphic interface** built for mobile-first experiences — installable as a Progressive Web App.
 
 ---
 
-## 🚀 v2.9.0 — The "Admin Renaissance" & Intelligent Discovery
+## 🌟 What is OpenShelf?
 
-**Release Date:** May 10, 2026
+OpenShelf transforms the way communities share knowledge. Instead of books collecting dust on personal shelves, members can list them on the platform and lend them to fellow community members. A student can discover a textbook, request it from a peer, and track the entire borrowing lifecycle — all from their phone.
 
-A transformative update that brings the entire **Administrative Suite** into the modern era. This release harmonizes the management interface with our premium brand identity, introduces global dark mode for administrators, and implements intelligent automation for library categorization.
+The platform serves two primary audiences:
 
-### Highlights
-
-- 🎨 **Admin Suite Renaissance** — Complete visual modernization of the entire administrative suite with our premium brand identity.
-- 🌗 **Global Admin Dark Mode** — Full, native dark mode support for all administrative surfaces and tools.
-- 🧠 **Intelligent Category Sync** — Reimagined Category Management with an automated "Collect" engine for real-time inventory synchronization.
-- 📱 **Responsive Admin Architecture** — Mobile-first refactor of all admin data tables, management grids, and interactive charts.
-
-📄 Full details: [v2.9.0 Release Notes](v2.9.0_release_notes.md)
+- **Community Members** — Browse, request, borrow, and return books with full email notifications and in-app alerts.
+- **Administrators** — Manage users, books, requests, reports, announcements, and financial transactions from a dedicated admin panel.
 
 ---
 
-## 🚀 v2.8.0 — The "Mobile-First" Design Evolution
+## ✨ Core Features
 
-**Release Date:** May 9, 2026
+### 👤 User Features
 
-A visual and functional transformation focused on delivering a high-fidelity, "native app" experience for web users. Drawing inspiration from modern mobile interfaces, this update introduces fluid navigation patterns, elegant glassmorphism, and a completely reimagined discovery layout.
+| Feature | Description |
+|---|---|
+| 📖 **Book Discovery** | Infinite scroll catalog with live search, category filters, and sorting |
+| 🔍 **Smart Search** | Real-time filtering by title, author, category, and availability |
+| ➕ **Add Books** | List personal books with custom cover uploads and full metadata |
+| 📬 **Borrow Requests** | Request books with a custom message; owner gets instant email alert |
+| 🔄 **Two-Step Returns** | Borrower initiates return; owner confirms or rejects via a secure email link |
+| ❤️ **Wishlist** | Wishlist unavailable books; get notified by email the moment one becomes free |
+| 🔔 **Notifications** | In-app alerts for borrows, approvals, rejections, returns, and announcements |
+| 👤 **User Profiles** | Public profiles showing shared books, borrow history, bio, and contact info |
+| ✏️ **Edit Profile** | Update name, department, hall, room number, bio, and profile picture |
+| 🔐 **Password Recovery** | Secure multi-step OTP flow via email + phone verification |
+| 💳 **Support Us** | Donate via bKash, Nagad, or Rocket with one-click copy & TrxID submission |
+| 📱 **PWA Support** | Installable on Android/iOS/Desktop with offline fallback page |
+| 📢 **Announcements** | Receive community-wide broadcasts in-app and via email |
+| 🌗 **Dark / Light Mode** | Full dark mode support across all pages and components |
 
-### Highlights
+### 🛡️ Admin Features
 
-- 📱 **Smart Header** — Complete redesign of the global header featuring "Smart Scroll" (auto-hide on scroll down, instant reveal on scroll up) and high-end glassmorphism.
-- 🏷️ **Integrated Category Bar** — Horizontal scrolling category "chips" with a persistent sticky state that glides to the top of the viewport for a seamless, app-like discovery experience.
-- 📚 **Modern Book Card Component** — Total overhaul of the book card with 20px radius, soft shadows, and floating pill-shaped availability badges with `backdrop-filter` blur.
-- 🎨 **Premium Site Footer** — Reimagined the footer with bold headings, vibrant gradient social links, and refined scannability.
-
-📄 Full details: [v2.8.0 Release Notes](v2.8.0_release_notes.md)
-
----
-
-## 🚀 v2.7.0 — The Notification & UX Evolution
-
-**Release Date:** April 29, 2026
-
-A major architectural and user experience milestone delivering a standardized notification engine, streamlined registration workflow, and enterprise-grade template stability.
-
-📄 Full details: [v2.7.0 Release Notes](v2.7.0_release_notes.md)
-
----
-
-## 🌟 Key Features
-
-### 👤 For Users
-
-- **Secure Registration:** Email-based authentication with university domain verification.
-- **Infinite Book Discovery:** Browse books with seamless infinite scroll powered by cursor-based pagination — no page reloads.
-- **Live Search & Filter:** Instantly filter books by keyword and category with results streaming in as you type.
-- **Easy Sharing:** Add your own books with custom cover uploads in seconds.
-- **Smart Requests:** Request books directly with automated email alerts to the owner.
-- **My Borrowed Books:** Track active borrows with visual due-date progress and one-click returns.
-- **Password Recovery:** Secure "Forget Password" flow with email + phone verification and OTP codes.
-- **Personalized Profiles:** A beautiful split-screen UI to manage your shared books and reading history.
-- **Real-time Notifications:** Stay updated with in-app alerts for borrows, approvals, and community news.
-- 💳 **Support Us:** Easily support the platform via bKash, Nagad, or Rocket with one-click copy and TrxID tracking.
-- **Mobile-First Design:** Fluid, app-like navigation with "Smart Scroll" headers and interactive category chips.
-- 📱 **Installable PWA:** Add OpenShelf to your mobile or desktop home screen for a standalone app experience.
-
-### 🛡️ For Administrators
-
-- **Dynamic Dashboard:** Real-time statistics with interactive charts and system health monitoring.
-- **Mobile-First Admin Panel:** Fully responsive management interface optimized for smartphones and tablets.
-- **Full Moderation:** Manage users, verify book entries, and oversee borrow requests.
-- **Announcement Engine:** Broadcast community-wide updates with premium styling, scheduling, and delivery via email and in-app alerts.
-- **Audit Logs:** Track every system activity for complete transparency and security.
-- **One-Click Backups:** Automated data safety tools to keep your library's information secure.
-- 📊 **Advanced Reports:** Export comprehensive CSV reports for users, books, and borrow history.
+| Feature | Description |
+|---|---|
+| 📊 **Dashboard** | Real-time stats with interactive charts for books, users, and requests |
+| 👥 **User Management** | View, verify, suspend, and delete users with role control |
+| 📚 **Book Moderation** | Review, edit, remove, and manage all listed books |
+| 📋 **Request Management** | Approve or reject borrow requests; track full lifecycle history |
+| 📢 **Announcement Engine** | Broadcast messages with priority levels, scheduling, and email + in-app delivery |
+| 🚩 **Reports Management** | Review bug/misconduct reports with status tracking and admin notes |
+| 💬 **Contact Messages** | Manage user contact submissions with reply tracking |
+| 💰 **Support Transactions** | Approve donation submissions and manage transaction records |
+| 🗂️ **Category Management** | Automated "Collect" engine to sync categories with real inventory |
+| 📁 **Backups** | One-click full system data export and restore |
+| 📈 **CSV Exports** | Export user, book, and borrow history reports |
+| 🔒 **Audit Logs** | Full activity log for admin transparency and accountability |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Backend:** PHP 7.4+ (Clean, modular architecture)
-- **Database:** MySQL 5.7+ (Scalable relational storage)
-- **Frontend:** Modern HTML5, CSS3 (Custom properties/variables), Vanilla JavaScript
-- **Styling:** Premium Glassmorphism, HSL color system, fluid animations
-- **Communication:** PHPMailer with SMTP integration (Brevo/SendGrid/Gmail)
-- **Architecture:** Progressive Web App (PWA) with Service Worker support
+| Layer | Technology |
+|---|---|
+| **Backend** | PHP 7.4+ — clean, modular, no framework |
+| **Database** | MySQL 5.7+ with PDO prepared statements |
+| **Frontend** | HTML5, CSS3 (Custom Properties), Vanilla JavaScript |
+| **Styling** | Glassmorphism, HSL color system, fluid micro-animations |
+| **Email** | PHPMailer with SMTP (Brevo / SendGrid / Gmail compatible) |
+| **Architecture** | Progressive Web App (PWA) with Service Worker |
+
+---
+
+## 📋 Database Schema
+
+The database consists of the following core tables:
+
+| Table | Purpose |
+|---|---|
+| `users` | Registered community members |
+| `books` | All listed books and their metadata |
+| `borrow_requests` | Full borrow lifecycle with return confirmation flow |
+| `notifications` | In-app notification records per user |
+| `announcements` | Admin-created community broadcasts |
+| `announcement_read_status` | Per-user read tracking for announcements |
+| `categories` | Book categories with live inventory counts |
+| `wishlist` | User wishlists for unavailable books |
+| `reports` | User-submitted bug/misconduct reports |
+| `contact_messages` | User contact form submissions |
+| `support_us` | Donation submissions from users |
+| `transactions` | Approved financial transaction records |
+| `login_otps` | OTP codes for password recovery |
+| `remember_tokens` | Persistent login tokens per device |
+| `admins` | Admin accounts and credentials |
 
 ---
 
@@ -115,9 +102,9 @@ A major architectural and user experience milestone delivering a standardized no
 
 - **PHP:** 7.4 or higher
 - **MySQL:** 5.7 or higher
-- **Server:** Apache/Nginx (with PHP support)
-- **Permissions:** Read/write access for `/data`, `/uploads`, `/logs`, `/sessions`, and `/backups`
-- **Mail:** SMTP credentials for automated notifications
+- **Server:** Apache / Nginx with PHP support
+- **Permissions:** Write access for `/uploads`, `/logs`, `/sessions`, and `/backups`
+- **Mail:** SMTP credentials for automated notifications (Brevo recommended)
 
 ---
 
@@ -132,39 +119,49 @@ cd OpenShelf
 
 ### 2. Configure Environment
 
-Create a `.env` file in the root directory by copying the example:
-
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill in your details:
+Open `.env` and set:
 
-- **Database Settings:** DB Host, DB Name, DB User, DB Password.
-- **SMTP Settings:** Host, Port, Secure, Username, Password.
-- **Email Settings:** From Address, From Name, Reply-To, and Admin Email.
-- **App Settings:** App Name, URL, and Debug mode.
+```ini
+DB_HOST=127.0.0.1
+DB_NAME=openshelf_db
+DB_USER=root
+DB_PASS=
 
-### 3. Database Migration
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your@email.com
+SMTP_PASS=your_smtp_key
 
-Import the provided schema into your MySQL server:
+APP_NAME=OpenShelf
+APP_URL=https://yourdomain.com
+ADMIN_EMAIL=admin@yourdomain.com
+```
 
+### 3. Create the Database & Import Schema
+
+**Via phpMyAdmin:**
+1. Create a database named `openshelf_db` with collation `utf8mb4_unicode_ci`.
+2. Import `data/schema.sql` via the **Import** tab.
+
+**Via Command Line:**
 ```bash
-mysql -u your_username -p your_database < data/schema.sql
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS openshelf_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root openshelf_db < data/schema.sql
 ```
 
 ### 4. Set File Permissions
 
-Ensure the web server can write to the following directories:
-
 ```bash
-chmod 755 data/ uploads/ logs/ sessions/ backups/
-chmod 644 data/*.json uploads/book_cover/ uploads/profile/
+chmod 755 uploads/ logs/ sessions/ backups/
 ```
 
 ### 5. Launch
 
-Navigate to your server's URL. For the admin panel, visit `/admin/`.
+Visit your server URL. The admin panel is at `/admin/`.
 
 ---
 
@@ -172,38 +169,89 @@ Navigate to your server's URL. For the admin panel, visit `/admin/`.
 
 ```
 openshelf/
-├── admin/            # Comprehensive management dashboard
-├── api/              # Dynamic endpoints (books, infinite scroll, etc.)
-├── assets/           # Premium CSS, JS, design tokens, and branding assets
-├── books/            # Public book discovery page with infinite scroll
-├── config/           # Centralized configuration (Database, Mail, App)
-├── data/             # SQL schema and configuration files
-├── emails/           # Email notification templates
-├── includes/         # Shared UI components and database singleton
-├── lib/              # Core libraries (Mailer, utilities)
-├── my-borrowed/      # User's active borrowed books tracker
-├── support_us/       # Community donation page (bKash, Nagad, Rocket)
-├── uploads/          # User-uploaded covers and profile media
-├── backups/          # Automatically generated system snapshots
-└── vendor/           # Composer dependencies
+├── admin/              # Admin dashboard & management panels
+├── api/                # AJAX endpoints (books, feed, settings, etc.)
+├── assets/             # CSS, JS, images, fonts, design tokens
+├── book/               # Single book detail & wishlist page
+├── books/              # Public book catalog with infinite scroll
+├── borrow-request/     # Borrow request submission
+├── confirm-return/     # Two-step return confirmation handler
+├── cron/               # Cron jobs (wishlist notifier, etc.)
+├── config/             # DB, mail, and app configuration
+├── data/               # schema.sql and migration scripts
+├── emails/             # All email notification templates
+├── includes/           # Shared PHP components (header, footer, db, helpers)
+├── lib/                # Core libraries (Mailer, utilities)
+├── my-borrowed/        # User's active borrowed books tracker
+├── notifications/      # In-app notification center
+├── profile/            # Public user profile page
+├── register/           # User registration & email verification
+├── login/              # Login with Remember Me & OTP recovery
+├── return-book/        # Borrower-initiated book return flow
+├── settings/           # User account settings & edit profile
+├── support_us/         # Community donation page
+├── uploads/            # User-uploaded book covers & profile photos
+├── backups/            # Auto-generated system snapshots
+└── vendor/             # Composer dependencies (PHPMailer)
 ```
 
 ---
 
-## 🧪 Security Standards
+## 🔐 Security Standards
 
-- ✅ **SQL Injection Protection:** High-security PDO prepared statements for all database queries.
-- ✅ **Domain-Locked Registration:** Prevent unauthorized access by restricting email domains.
-- ✅ **Encrypted Sessions:** Secure user state management.
-- ✅ **Environment Protection:** Sensitive database credentials and passwords kept in `.env`.
-- ✅ **OTP-Based Recovery:** Two-factor password reset prevents unauthorized account takeover.
-- ✅ **Data Separation:** Core media uploads isolated from critical system files.
+| Protection | Implementation |
+|---|---|
+| **SQL Injection** | PDO prepared statements for all database queries |
+| **XSS** | `htmlspecialchars()` on all user-rendered output |
+| **Session Security** | Encrypted sessions with strict cookie settings |
+| **Env Protection** | All credentials stored in `.env`, excluded from git |
+| **OTP Recovery** | Two-factor (email + phone) password reset with hashed OTPs |
+| **Return Confirmation** | Secure token-based two-step book return flow |
+| **Domain Registration** | Optional email domain restriction for university deployments |
+| **Admin Auth** | Separate admin table with independent credential management |
+
+---
+
+## 📧 Email Notifications
+
+OpenShelf sends automated, HTML-formatted emails for:
+
+- ✅ Welcome / Registration confirmation
+- 📬 Borrow request received (to book owner)
+- ✅ Borrow request approved (to borrower)
+- ❌ Borrow request rejected (to borrower)
+- 📦 Book return initiated (to owner for confirmation)
+- ✅ Return confirmed (to borrower)
+- ❌ Return rejected (to borrower)
+- ❤️ Wishlist availability notification
+- 📢 Community announcements
+
+All templates are stored in `/emails/` and use the centralized `Mailer` class.
+
+---
+
+## 📱 Progressive Web App (PWA)
+
+OpenShelf is fully installable as a PWA:
+
+- **Service Worker** — Caches static assets for offline access
+- **Web App Manifest** — Defines app name, icons, theme color
+- **Offline Page** — Custom glassmorphic offline fallback at `/offline.php`
+- **Install Prompt** — Native browser install banner support
+
+---
+
+## 🔄 Release History
+
+See [RELEASES.md](RELEASES.md) for full version history.
+
+**Current:** v3.2.0 — Database Integrity & Schema Completion *(July 8, 2026)*
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's reporting bugs, suggesting features, or submitting pull requests, we value community input. Check out our contributing guidelines for more details.
+Contributions are welcome! Whether it's reporting bugs, suggesting features, or submitting pull requests, all community input is valued.
 
 ---
 
@@ -216,10 +264,11 @@ This project is open-source and released under the **MIT License**.
 ## 📞 Support & Community
 
 - **Email:** <support@duopenshelf.top>
-- **Reporting:** Use `/report.php` for bugs or misconduct
-- **Feedback:** Use the built-in `/contact.php` form
-- **FAQ:** Check `/faq.php` for common questions
-- **Support Us:** Donate via `/support_us/` to keep OpenShelf running
+- **Bug Reports:** `/report.php`
+- **Contact / Feedback:** `/contact.php`
+- **FAQ:** `/faq.php`
+- **Donate:** `/support_us/`
 
 ---
+
 **OpenShelf** — Empowering communities, one shared book at a time. 📚✨
