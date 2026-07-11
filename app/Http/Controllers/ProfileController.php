@@ -28,7 +28,7 @@ class ProfileController extends Controller
 
         $isOwnProfile = $request->session()->get('user_id') === $viewUserId;
 
-        return view('profile.index', [
+        return view('profile', [
             'seoTitle' => $user->name . ' - OpenShelf Profile',
             'seoDesc' => 'View ' . $user->name . '\'s book collection on OpenShelf.',
             'user' => $user,
