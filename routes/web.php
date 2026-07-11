@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\BookApiController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\BooksController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +24,10 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+
+Route::get('/books', [BooksController::class, 'index'])->name('books');
+Route::get('/api/books', [BookApiController::class, 'index']);
+Route::match(['get', 'post'], '/book', [BookController::class, 'show'])->name('book.show');
 
 Route::get('/book-cards-demo', function () {
     $books = [

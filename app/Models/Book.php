@@ -17,11 +17,24 @@ class Book extends Model
         'views' => 'integer',
         'times_borrowed' => 'integer',
         'rating_count' => 'integer',
+        'tags' => 'array',
+        'reviews' => 'array',
+        'comments' => 'array',
     ];
 
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function borrowRequests()
+    {
+        return $this->hasMany(BorrowRequest::class, 'book_id');
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class, 'book_id');
     }
 
     public function getDisplayStatusAttribute(): string
@@ -31,14 +44,47 @@ class Book extends Model
 
     public function getCoverUrlAttribute(): string
     {
+        return $this->resolveStoredCoverPath(false);
+    }
+
+    public function getDetailCoverUrlAttribute(): string
+    {
+        return $this->resolveStoredCoverPath(true);
+    }
+
+    private function resolveStoredCoverPath(bool $preferFullImage): string
+    {
         if (empty($this->cover_image)) {
             return asset('images/default-book-cover.jpg');
         }
 
-        $relative = ltrim($this->cover_image, '/');
-        $publicPath = public_path($relative);
+        $filename = basename(ltrim($this->cover_image, '/'));
+        $fullRelative = 'uploads/book_cover/' . $filename;
+        $thumbRelative = 'uploads/book_cover/thumb_' . $filename;
 
-        return file_exists($publicPath) ? asset($relative) : asset('images/default-book-cover.jpg');
+        if ($preferFullImage) {
+            if (file_exists(public_path($fullRelative))) {
+                return asset($fullRelative);
+            }
+
+            if (file_exists(public_path($thumbRelative))) {
+                return asset($thumbRelative);
+            }
+        } else {
+            if (file_exists(public_path($fullRelative))) {
+                return asset($fullRelative);
+            }
+
+            if (file_exists(public_path($thumbRelative))) {
+                return asset($thumbRelative);
+            }
+        }
+
+        $relative = ltrim($this->cover_image, '/');
+
+        return file_exists(public_path($relative))
+            ? asset($relative)
+            : asset('images/default-book-cover.jpg');
     }
 
     public function getOwnerAvatarUrlAttribute(): string

@@ -12,6 +12,11 @@ class BorrowRequest extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'request_date' => 'datetime',
+        'expected_return_date' => 'datetime',
+    ];
+
     public function borrower()
     {
         return $this->belongsTo(User::class, 'borrower_id');
