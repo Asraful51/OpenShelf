@@ -19,6 +19,11 @@ class Book extends Model
         'rating_count' => 'integer',
     ];
 
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
     public function getDisplayStatusAttribute(): string
     {
         return strtolower($this->status ?? 'available');
