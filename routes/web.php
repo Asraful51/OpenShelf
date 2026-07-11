@@ -5,7 +5,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\BooksController;
+use App\Http\Controllers\BorrowRequestPageController;
+use App\Http\Controllers\ConfirmReturnController;
+use App\Http\Controllers\MyBorrowedController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RequestsController;
+use App\Http\Controllers\ReturnBookController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +33,13 @@ Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::get('/books', [BooksController::class, 'index'])->name('books');
 Route::get('/api/books', [BookApiController::class, 'index']);
 Route::match(['get', 'post'], '/book', [BookController::class, 'show'])->name('book.show');
+
+Route::match(['get', 'post'], '/borrow-request', [BorrowRequestPageController::class, 'show'])->name('borrow-request');
+Route::get('/my-borrowed', [MyBorrowedController::class, 'index'])->name('my-borrowed');
+Route::match(['get', 'post'], '/return-book', [ReturnBookController::class, 'show'])->name('return-book');
+Route::match(['get', 'post'], '/confirm-return', [ConfirmReturnController::class, 'show'])->name('confirm-return');
+
+Route::match(['get', 'post'], '/requests', [RequestsController::class, 'index'])->name('requests.index');
 
 Route::get('/book-cards-demo', function () {
     $books = [

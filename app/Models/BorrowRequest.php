@@ -15,6 +15,15 @@ class BorrowRequest extends Model
     protected $casts = [
         'request_date' => 'datetime',
         'expected_return_date' => 'datetime',
+        'returned_at' => 'datetime',
+        'actual_return_date' => 'datetime',
+        'return_confirmation_sent_at' => 'datetime',
+        'return_confirmed_at' => 'datetime',
+        'return_rejected_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'history' => 'array',
+        'rating' => 'integer',
     ];
 
     public function borrower()

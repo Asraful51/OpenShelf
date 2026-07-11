@@ -10,6 +10,11 @@
 @import './settings.css';
 @import './books.css';
 @import './book.css';
+@import './borrow-request.css';
+@import './my-borrowed.css';
+@import './return-book.css';
+@import './confirm-return.css';
+@import './requests.css';
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
