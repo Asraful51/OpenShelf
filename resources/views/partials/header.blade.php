@@ -64,27 +64,27 @@
             @endif
 
             <!-- Auth Menu -->
-            @auth
+            @if($headerUser)
                 <div class="user-menu">
                     <button class="user-button" id="userMenuBtn" aria-label="User menu">
-                        <img 
-                            src="{{ Storage::url('profile/' . (auth()->user()->profile_pic ?? 'default-avatar.jpg')) }}" 
-                            alt="{{ auth()->user()->name }}" 
+                        <img
+                            src="{{ $headerUser->profile_image_url }}"
+                            alt="{{ $headerUser->name }}"
                             class="user-avatar"
                         >
                     </button>
-                    
+
                     <!-- User Dropdown Menu -->
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-info">
-                            <img 
-                                src="{{ Storage::url('profile/' . (auth()->user()->profile_pic ?? 'default-avatar.jpg')) }}" 
-                                alt="{{ auth()->user()->name }}" 
+                            <img
+                                src="{{ $headerUser->profile_image_url }}"
+                                alt="{{ $headerUser->name }}"
                                 class="user-avatar-large"
                             >
                             <div>
-                                <p class="user-name">{{ auth()->user()->name }}</p>
-                                <p class="user-email">{{ auth()->user()->email }}</p>
+                                <p class="user-name">{{ $headerUser->name }}</p>
+                                <p class="user-email">{{ $headerUser->email }}</p>
                             </div>
                         </div>
 
@@ -100,7 +100,7 @@
                             <i class="fas fa-book"></i> My Books
                         </a>
 
-                        @if(auth()->user()->role === 'admin')
+                        @if($headerUser->role === 'admin')
                             <div class="dropdown-divider"></div>
                             <a href="/admin" class="dropdown-link">
                                 <i class="fas fa-shield"></i> Admin Panel
@@ -122,7 +122,7 @@
                     <a href="/login" class="btn btn-ghost">Login</a>
                     <a href="/register" class="btn btn-primary">Sign Up</a>
                 </div>
-            @endauth
+            @endif
 
             <!-- Theme Toggle -->
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">

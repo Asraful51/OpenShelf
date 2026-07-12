@@ -13,7 +13,7 @@
         <!-- Central FAB Notch Area -->
         <div class="nav-center">
             <div class="fab-notch"></div>
-            @auth
+            @if(session('user_id'))
                 <a href="/add-book" class="fab-button @if(Route::currentRouteName() === 'books.create') active @endif" aria-label="Add Book">
                     <i class="fas fa-plus"></i>
                 </a>
@@ -21,7 +21,7 @@
                 <a href="/login" class="fab-button" aria-label="Login to add books">
                     <i class="fas fa-plus"></i>
                 </a>
-            @endauth
+            @endif
         </div>
 
         <!-- Right Side Icons -->
@@ -29,7 +29,7 @@
             <a href="/my-borrowed" class="nav-item @if(Route::currentRouteName() === 'borrowed.index') active @endif" aria-label="My Borrowed">
                 <i class="fas fa-book-reader"></i>
             </a>
-            @auth
+            @if(session('user_id'))
                 <a href="/profile" class="nav-item @if(Route::currentRouteName() === 'profile.show') active @endif" aria-label="Profile">
                     <i class="fas fa-user"></i>
                 </a>
@@ -37,7 +37,7 @@
                 <a href="/login" class="nav-item" aria-label="Login">
                     <i class="fas fa-user"></i>
                 </a>
-            @endauth
+            @endif
         </div>
     </div>
 </div>

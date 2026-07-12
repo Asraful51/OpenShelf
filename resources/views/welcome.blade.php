@@ -12,7 +12,7 @@
 
     <!-- CTA Buttons -->
     <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 3rem; flex-wrap: wrap;">
-        @auth
+        @if(session('user_id'))
             <a href="/books" style="background: var(--secondary); color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600; transition: all 0.2s; display: inline-block;">
                 Browse Books
             </a>
@@ -26,7 +26,7 @@
             <a href="/register" style="background: white; color: var(--secondary); border: 2px solid var(--secondary); padding: 0.75rem 2rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600; transition: all 0.2s; display: inline-block;">
                 Sign Up
             </a>
-        @endauth
+        @endif
     </div>
 
     <!-- Featured Section -->

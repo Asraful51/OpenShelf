@@ -4,6 +4,9 @@ use App\Http\Controllers\AddBookController;
 use App\Http\Controllers\AnnouncementsController;
 use App\Http\Controllers\Api\BookApiController;
 use App\Http\Controllers\Api\NotificationApiController;
+use App\Http\Controllers\Api\SettingsApiController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\EditBookController;
 use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\Auth\LoginController;
@@ -32,11 +35,17 @@ Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.forgot');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'handle'])->name('password.forgot.handle');
+
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::get('/settings/edit-profile', [EditProfileController::class, 'show'])->name('settings.edit-profile');
 Route::post('/settings/edit-profile', [EditProfileController::class, 'update'])->name('settings.edit-profile.update');
+Route::get('/settings/change-password', [ChangePasswordController::class, 'show'])->name('settings.change-password');
+Route::post('/settings/change-password', [ChangePasswordController::class, 'update'])->name('settings.change-password.update');
+Route::match(['get', 'post'], '/api/settings', [SettingsApiController::class, 'handle']);
 
 Route::get('/add-book', [AddBookController::class, 'create'])->name('books.create');
 Route::post('/add-book', [AddBookController::class, 'store'])->name('books.store');

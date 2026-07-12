@@ -31,6 +31,7 @@
         .login-header p { color: var(--text-muted); font-size: 0.95rem; }
         .alert { padding: 0.875rem 1rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 500; }
         .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .alert-success { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.2); color: #99ffcc; }
         .form-group { margin-bottom: 1.25rem; }
         .input-group { position: relative; display: flex; align-items: center; }
         .input-group > i:first-child { position: absolute; left: 1.25rem; color: var(--text-muted); font-size: 1rem; transition: color 0.3s ease; pointer-events: none; }
@@ -67,6 +68,13 @@
                 <p>Login to your portal</p>
             </div>
 
+            @if (session('success'))
+                <div class="alert alert-success">
+                    <i class="fas fa-circle-check"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="alert alert-error">
                     <i class="fas fa-circle-exclamation"></i>
@@ -96,7 +104,7 @@
                         <span class="custom-checkbox"><i class="fas fa-check"></i></span>
                         <span>Remember me</span>
                     </label>
-                    <a href="/forget_password.php" class="forgot-password">Forgot password?</a>
+                    <a href="{{ route('password.forgot') }}" class="forgot-password">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn-login" id="loginBtn">

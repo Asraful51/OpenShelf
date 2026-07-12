@@ -37,7 +37,7 @@
                 <i class="fas fa-chevron-right hub-menu-arrow"></i>
             </a>
 
-            <a href="/settings/change-password/" class="hub-menu-item">
+            <a href="{{ route('settings.change-password') }}" class="hub-menu-item">
                 <div class="hub-menu-left">
                     <div class="hub-icon-container">
                         <i class="fas fa-shield-halved"></i>
