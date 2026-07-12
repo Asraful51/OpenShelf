@@ -95,7 +95,7 @@
                     </div>
                     <div class="action-group">
                         @if ($isOwner)
-                            <a href="/edit-book/?id={{ $book->id }}" class="btn btn-primary">
+                            <a href="{{ route('books.edit', ['id' => $book->id]) }}" class="btn btn-primary">
                                 <i class="fas fa-edit"></i> Edit Listing
                             </a>
                             <button onclick="shareBook()" class="btn btn-outline">

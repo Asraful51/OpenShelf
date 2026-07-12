@@ -95,7 +95,7 @@
         <div class="profile-actions-wrapper">
             @if ($isOwnProfile)
                 <div class="action-buttons-row">
-                    <a href="/settings/edit-profile/" class="btn btn-profile-action add-btn" style="justify-content: center;">
+                    <a href="{{ route('settings.edit-profile') }}" class="btn btn-profile-action add-btn" style="justify-content: center;">
                         <i class="fas fa-user-edit"></i> Edit Profile
                     </a>
                     <a href="/add-book/" class="btn btn-profile-action edit-btn" style="justify-content: center;">

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AddBookController;
 use App\Http\Controllers\Api\BookApiController;
+use App\Http\Controllers\EditBookController;
+use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BookController;
@@ -30,9 +32,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+Route::get('/settings/edit-profile', [EditProfileController::class, 'show'])->name('settings.edit-profile');
+Route::post('/settings/edit-profile', [EditProfileController::class, 'update'])->name('settings.edit-profile.update');
 
 Route::get('/add-book', [AddBookController::class, 'create'])->name('books.create');
 Route::post('/add-book', [AddBookController::class, 'store'])->name('books.store');
+
+Route::get('/edit-book', [EditBookController::class, 'edit'])->name('books.edit');
+Route::post('/edit-book', [EditBookController::class, 'update'])->name('books.update');
 
 Route::get('/books', [BooksController::class, 'index'])->name('books');
 Route::get('/api/books', [BookApiController::class, 'index']);

@@ -24,7 +24,7 @@
         </div>
 
         <nav class="hub-menu-list">
-            <a href="/settings/edit-profile/" class="hub-menu-item">
+            <a href="{{ route('settings.edit-profile') }}" class="hub-menu-item">
                 <div class="hub-menu-left">
                     <div class="hub-icon-container">
                         <i class="fas fa-user-gear"></i>
