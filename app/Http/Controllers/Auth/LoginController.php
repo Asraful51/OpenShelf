@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\RememberToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,14 +14,16 @@ class LoginController extends Controller
     public function show(Request $request)
     {
         if ($request->session()->has('user_id')) {
-            return redirect('/');
+            return redirect()->route('books');
         }
 
         if ($request->has('redirect')) {
             $request->session()->put('redirect_after_login', $request->get('redirect'));
         }
 
-        return view('login');
+        return view('login', [
+            'success' => session('success'),
+        ]);
     }
 
     public function login(Request $request)
@@ -69,6 +72,21 @@ class LoginController extends Controller
 
         if ($request->boolean('remember_me')) {
             $token = Str::random(40);
+            $hashedToken = hash('sha256', $token);
+
+            RememberToken::query()
+                ->where('user_id', $user->id)
+                ->where('expiry', '<=', time())
+                ->delete();
+
+            RememberToken::create([
+                'user_id' => $user->id,
+                'token' => $hashedToken,
+                'expiry' => time() + (60 * 60 * 24 * 30),
+                'user_agent' => $request->userAgent() ?? 'unknown',
+                'ip_address' => $request->ip(),
+            ]);
+
             $response->withCookie(cookie('remember_token', $user->id . ':' . $token, 60 * 24 * 30));
         } else {
             $response->withCookie(cookie()->forget('remember_token'));
@@ -79,9 +97,52 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        $request->session()->forget(['user_id', 'user_name', 'user_role', 'user_hall', 'login_time']);
+        $userId = $request->session()->get('user_id');
+        $userName = $request->session()->get('user_name', 'Unknown');
+        $userRole = $request->session()->get('user_role');
+
+        if ($request->cookie('remember_token')) {
+            $token = $request->cookie('remember_token');
+
+            if (str_contains($token, ':')) {
+                [$tokenUserId, $tokenValue] = explode(':', $token, 2);
+
+                RememberToken::query()
+                    ->where('user_id', $tokenUserId)
+                    ->where('token', hash('sha256', $tokenValue))
+                    ->delete();
+            }
+        }
+
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->withCookie(cookie()->forget('remember_token'));
+        if ($userId) {
+            $this->logUserActivity($userId, 'logout');
+
+            if ($userRole === 'admin') {
+                $this->logAdminAudit($userName);
+            }
+        }
+
+        $redirectUrl = $request->query('redirect', route('home'));
+
+        return redirect()->to($redirectUrl)
+            ->with('success', 'You have been successfully logged out.')
+            ->withCookie(cookie()->forget('remember_token'));
+    }
+
+    private function logUserActivity(string $userId, string $action): void
+    {
+        $logFile = storage_path('logs/user_activity.log');
+        $entry = now()->format('Y-m-d H:i:s') . " | User: {$userId} | Action: {$action} | IP: " . request()->ip() . PHP_EOL;
+        file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
+    }
+
+    private function logAdminAudit(string $userName): void
+    {
+        $logFile = storage_path('logs/admin_audit.log');
+        $entry = now()->format('Y-m-d H:i:s') . " | Admin: {$userName} | Action: logout | IP: " . request()->ip() . PHP_EOL;
+        file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX);
     }
 }

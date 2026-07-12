@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\AddBookController;
 use App\Http\Controllers\AnnouncementsController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StaticPageController;
 use App\Http\Controllers\Api\BookApiController;
 use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\Api\SettingsApiController;
@@ -23,9 +27,17 @@ use App\Http\Controllers\ReturnBookController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/faq', [StaticPageController::class, 'faq'])->name('faq');
+Route::get('/about', [StaticPageController::class, 'about'])->name('about');
+Route::get('/terms', [StaticPageController::class, 'terms'])->name('terms');
+Route::get('/privacy', [StaticPageController::class, 'privacy'])->name('privacy');
+Route::get('/guidelines', [StaticPageController::class, 'guidelines'])->name('guidelines');
+Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::get('/report', [ReportController::class, 'show'])->name('report');
+Route::post('/report', [ReportController::class, 'store'])->name('report.store');
 
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store']);
@@ -34,6 +46,7 @@ Route::get('/register/verify', [RegisterController::class, 'verify'])->name('reg
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/logout', [LoginController::class, 'logout']);
 
 Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.forgot');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'handle'])->name('password.forgot.handle');

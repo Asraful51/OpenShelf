@@ -280,7 +280,7 @@
                 <div class="terms-group">
                     <input type="checkbox" name="terms" id="terms" {{ old('terms') ? 'checked' : '' }}>
                     <label for="terms" class="custom-checkbox"><i class="fas fa-check"></i></label>
-                    <label for="terms">I accept the <a href="/terms.php">Terms</a> and <a href="/privacy.php">Privacy Policy</a></label>
+                    <label for="terms">I accept the <a href="{{ route('terms') }}">Terms</a> and <a href="{{ route('privacy') }}">Privacy Policy</a></label>
                 </div>
 
                 <button type="submit" class="btn-register" id="submitBtn">
