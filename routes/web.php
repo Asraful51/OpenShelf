@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddBookController;
 use App\Http\Controllers\Api\BookApiController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -29,6 +30,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+
+Route::get('/add-book', [AddBookController::class, 'create'])->name('books.create');
+Route::post('/add-book', [AddBookController::class, 'store'])->name('books.store');
 
 Route::get('/books', [BooksController::class, 'index'])->name('books');
 Route::get('/api/books', [BookApiController::class, 'index']);

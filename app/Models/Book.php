@@ -22,6 +22,20 @@ class Book extends Model
         'comments' => 'array',
     ];
 
+    public static function generateUniqueId(): string
+    {
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
+
+        do {
+            $bookId = '';
+            for ($i = 0; $i < 10; $i++) {
+                $bookId .= $characters[random_int(0, strlen($characters) - 1)];
+            }
+        } while (static::query()->where('id', $bookId)->exists());
+
+        return $bookId;
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
