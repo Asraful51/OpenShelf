@@ -4,14 +4,15 @@ namespace App\Services;
 
 use App\Models\Book;
 use App\Models\BorrowRequest;
-use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wishlist;
 
 class BorrowRequestService
 {
-    public function __construct(private BookQueryService $bookQueryService)
-    {
+    public function __construct(
+        private BookQueryService $bookQueryService,
+        private NotificationService $notificationService,
+    ) {
     }
 
     public function hasPendingRequest(string $bookId, string $userId): bool
@@ -58,7 +59,7 @@ class BorrowRequestService
             'updated_at' => now(),
         ]);
 
-        $this->createNotification(
+        $this->notificationService->create(
             $book->owner_id,
             'borrow_request',
             'New Borrow Request',
@@ -100,7 +101,7 @@ class BorrowRequestService
             'updated_at' => now(),
         ]);
 
-        $this->createNotification(
+        $this->notificationService->create(
             $borrowRequest->owner_id,
             'return_pending',
             'Book Return Awaiting Confirmation',
@@ -142,7 +143,7 @@ class BorrowRequestService
                 'updated_at' => now(),
             ]);
 
-            $this->createNotification(
+            $this->notificationService->create(
                 $borrowRequest->borrower_id,
                 'return_confirmed',
                 'Return Confirmed',
@@ -150,7 +151,7 @@ class BorrowRequestService
                 '/requests/?id=' . $borrowRequest->id,
             );
 
-            $this->createNotification(
+            $this->notificationService->create(
                 $borrowRequest->owner_id,
                 'book_returned',
                 'Book Return Complete',
@@ -180,7 +181,7 @@ class BorrowRequestService
             'updated_at' => now(),
         ]);
 
-        $this->createNotification(
+        $this->notificationService->create(
             $borrowRequest->borrower_id,
             'return_rejected',
             'Return Not Confirmed',
@@ -265,7 +266,7 @@ class BorrowRequestService
             'updated_at' => now(),
         ]);
 
-        $this->createNotification(
+        $this->notificationService->create(
             $borrowRequest->borrower_id,
             'request_approved',
             'Borrow Request Approved',
@@ -300,7 +301,7 @@ class BorrowRequestService
             $message .= ': ' . $reason;
         }
 
-        $this->createNotification(
+        $this->notificationService->create(
             $borrowRequest->borrower_id,
             'request_rejected',
             'Borrow Request Rejected',
@@ -314,25 +315,5 @@ class BorrowRequestService
     public function thumbCoverUrl(?string $coverImage): string
     {
         return $this->bookQueryService->resolveCoverPath($coverImage);
-    }
-
-    private function createNotification(
-        string $userId,
-        string $type,
-        string $title,
-        string $message,
-        string $link,
-    ): void {
-        Notification::create([
-            'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-            'user_id' => $userId,
-            'type' => $type,
-            'title' => $title,
-            'message' => $message,
-            'link' => $link,
-            'is_read' => false,
-            'created_at' => now(),
-            'expires_at' => now()->addDays(30),
-        ]);
     }
 }

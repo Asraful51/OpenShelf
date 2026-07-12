@@ -32,12 +32,14 @@
         <!-- Right Side: Auth & Notifications -->
         <div class="header-right">
             <!-- Notifications -->
-            @auth
+            @if(session('user_id'))
             <div class="notification-bell">
                 <button class="bell-button" id="notificationBell" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
-                    @if($notificationCount > 0)
-                        <span class="notification-badge">{{ min($notificationCount, 99) }}</span>
+                    @if(($notificationCount ?? 0) > 0)
+                        <span class="notification-badge" id="headerNotificationBadge">{{ min($notificationCount, 99) }}</span>
+                    @else
+                        <span class="notification-badge" id="headerNotificationBadge" style="display: none;"></span>
                     @endif
                 </button>
                 
@@ -50,11 +52,16 @@
                         </button>
                     </div>
                     <div class="notification-list" id="notificationList">
-                        <!-- Populated by JS -->
+                        <div class="notification-loading" style="padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                            Loading...
+                        </div>
+                    </div>
+                    <div class="notification-footer" style="padding: 0.75rem 1rem; border-top: 1px solid rgba(0,0,0,0.05); text-align: center;">
+                        <a href="{{ route('notifications.index') }}" style="font-size: 0.85rem; font-weight: 600; color: #4C9F8A; text-decoration: none;">View all notifications</a>
                     </div>
                 </div>
             </div>
-            @endauth
+            @endif
 
             <!-- Auth Menu -->
             @auth
@@ -349,6 +356,82 @@
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
 
+    .notification-dropdown .notification-list {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .notification-dropdown .notification-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.2s ease;
+    }
+
+    .notification-dropdown .notification-item:hover {
+        background: rgba(76, 159, 138, 0.06);
+    }
+
+    .notification-dropdown .notification-item.unread {
+        background: rgba(76, 159, 138, 0.08);
+    }
+
+    .notification-dropdown .notification-item-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+
+    .notification-dropdown .notification-item-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-dropdown .notification-item-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 0.15rem;
+        color: #1e293b;
+    }
+
+    .notification-dropdown .notification-item-message {
+        font-size: 0.78rem;
+        color: #64748b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .notification-dropdown .notification-item-time {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 0.2rem;
+    }
+
+    .notification-dropdown .notification-empty {
+        padding: 2rem 1rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    [data-theme="dark"] .notification-dropdown .notification-item-title {
+        color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .notification-dropdown .notification-item-message {
+        color: #94a3b8;
+    }
+
     [data-theme="dark"] .notification-header,
     [data-theme="dark"] .user-info {
         border-bottom-color: rgba(255, 255, 255, 0.05);
@@ -525,9 +608,97 @@ document.addEventListener('DOMContentLoaded', function() {
     // Notification dropdown
     if (notificationBell) {
         notificationBell.addEventListener('click', () => {
+            const isOpening = !notificationDropdown?.classList.contains('active');
             notificationDropdown?.classList.toggle('active');
             userDropdown?.classList.remove('active');
+            if (isOpening) {
+                loadHeaderNotifications();
+            }
         });
+    }
+
+    function updateHeaderNotificationBadge(count) {
+        const badge = document.getElementById('headerNotificationBadge');
+        if (!badge) return;
+
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function renderHeaderNotifications(notifications) {
+        const list = document.getElementById('notificationList');
+        if (!list) return;
+
+        if (!notifications.length) {
+            list.innerHTML = '<div class="notification-empty"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(notification => `
+            <a href="${notification.link || '#'}" class="notification-item ${notification.is_read ? '' : 'unread'}" data-id="${notification.id}">
+                <div class="notification-item-icon" style="background: ${notification.color}20; color: ${notification.color};">
+                    <i class="fas ${notification.icon}"></i>
+                </div>
+                <div class="notification-item-content">
+                    <div class="notification-item-title">${notification.title}</div>
+                    <div class="notification-item-message">${notification.message}</div>
+                    <div class="notification-item-time">${notification.time_ago}</div>
+                </div>
+            </a>
+        `).join('');
+
+        list.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                const id = this.dataset.id;
+                const link = this.getAttribute('href');
+                if (!id || !link || link === '#') return;
+
+                e.preventDefault();
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({
+                        action: 'mark_read',
+                        notification_id: id,
+                    }),
+                }).finally(() => {
+                    window.location.href = link;
+                });
+            });
+        });
+    }
+
+    function loadHeaderNotifications() {
+        const list = document.getElementById('notificationList');
+        if (!list) return;
+
+        list.innerHTML = '<div class="notification-loading" style="padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.85rem;">Loading...</div>';
+
+        fetch('/api/notifications?action=list&limit=10&include_read=false', {
+            headers: { 'Accept': 'application/json' },
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderHeaderNotifications(data.notifications || []);
+                    updateHeaderNotificationBadge(data.unread_count || 0);
+                } else {
+                    list.innerHTML = '<div class="notification-empty">Unable to load notifications</div>';
+                }
+            })
+            .catch(() => {
+                list.innerHTML = '<div class="notification-empty">Unable to load notifications</div>';
+            });
     }
 
     // Close notification dropdown

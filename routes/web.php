@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AddBookController;
 use App\Http\Controllers\Api\BookApiController;
+use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\EditBookController;
 use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\Auth\LoginController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\BooksController;
 use App\Http\Controllers\BorrowRequestPageController;
 use App\Http\Controllers\ConfirmReturnController;
 use App\Http\Controllers\MyBorrowedController;
+use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestsController;
 use App\Http\Controllers\ReturnBookController;
@@ -51,6 +53,9 @@ Route::match(['get', 'post'], '/return-book', [ReturnBookController::class, 'sho
 Route::match(['get', 'post'], '/confirm-return', [ConfirmReturnController::class, 'show'])->name('confirm-return');
 
 Route::match(['get', 'post'], '/requests', [RequestsController::class, 'index'])->name('requests.index');
+
+Route::match(['get', 'post'], '/notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+Route::match(['get', 'post'], '/api/notifications', [NotificationApiController::class, 'index']);
 
 Route::get('/book-cards-demo', function () {
     $books = [

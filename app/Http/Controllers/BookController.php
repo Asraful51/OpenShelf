@@ -4,17 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\BorrowRequest;
-use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\BookQueryService;
+use App\Services\NotificationService;
 use App\Support\RelativeTime;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
-    public function __construct(private BookQueryService $bookQueryService)
-    {
+    public function __construct(
+        private BookQueryService $bookQueryService,
+        private NotificationService $notificationService,
+    ) {
     }
 
     public function show(Request $request)
@@ -190,17 +192,13 @@ class BookController extends Controller
             'updated_at' => now(),
         ]);
 
-        Notification::create([
-            'id' => 'notif_' . uniqid() . '_' . bin2hex(random_bytes(4)),
-            'user_id' => $book->owner_id,
-            'type' => 'borrow_request',
-            'title' => 'New Borrow Request',
-            'message' => $currentUserName . ' wants to borrow "' . $book->title . '"',
-            'link' => '/requests/?id=' . $requestId,
-            'is_read' => false,
-            'created_at' => now(),
-            'expires_at' => now()->addDays(30),
-        ]);
+        $this->notificationService->create(
+            $book->owner_id,
+            'borrow_request',
+            'New Borrow Request',
+            $currentUserName . ' wants to borrow "' . $book->title . '"',
+            '/requests/?id=' . $requestId,
+        );
 
         return redirect()->route('book.show', ['id' => $book->id])
             ->with('borrow_message', 'Request sent successfully!');
