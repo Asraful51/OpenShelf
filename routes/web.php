@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AddBookController;
+use App\Http\Controllers\AnnouncementsController;
 use App\Http\Controllers\Api\BookApiController;
 use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\EditBookController;
@@ -56,6 +57,8 @@ Route::match(['get', 'post'], '/requests', [RequestsController::class, 'index'])
 
 Route::match(['get', 'post'], '/notifications', [NotificationsController::class, 'index'])->name('notifications.index');
 Route::match(['get', 'post'], '/api/notifications', [NotificationApiController::class, 'index']);
+
+Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements.index');
 
 Route::get('/book-cards-demo', function () {
     $books = [
