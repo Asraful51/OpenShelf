@@ -5,13 +5,16 @@ namespace App\Services;
 use App\Models\LoginOtp;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 
 class PasswordResetService
 {
     private const OTP_EXPIRY_SECONDS = 600;
 
     private const MAX_ATTEMPTS = 5;
+
+    public function __construct(private MailerService $mailer)
+    {
+    }
 
     public function findUserByPhoneAndEmail(string $phone, string $email): ?User
     {
@@ -41,16 +44,20 @@ class PasswordResetService
             'created_at' => now(),
         ]);
 
-        try {
-            Mail::send('emails.forget-password', [
+        $sent = $this->mailer->sendTemplate(
+            $user->email,
+            $user->name,
+            'forget_password',
+            [
+                'subject' => 'Password Reset Verification - OpenShelf',
                 'otp' => $otp,
-                'expiryMinutes' => (int) (self::OTP_EXPIRY_SECONDS / 60),
-                'userName' => $user->name,
-            ], function ($message) use ($user) {
-                $message->to($user->email, $user->name)
-                    ->subject('Password Reset Verification - OpenShelf');
-            });
-        } catch (\Throwable) {
+                'expiry_minutes' => (int) (self::OTP_EXPIRY_SECONDS / 60),
+                'user_name' => $user->name,
+            ],
+            $user->id,
+        );
+
+        if (! $sent) {
             LoginOtp::query()->where('id', $otpId)->delete();
 
             return null;

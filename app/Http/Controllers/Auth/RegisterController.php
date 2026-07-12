@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\MailerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,10 @@ use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
+    public function __construct(private MailerService $mailer)
+    {
+    }
+
     public function show()
     {
         return view('register');
@@ -51,6 +56,20 @@ class RegisterController extends Controller
         $user->profile_pic = 'default-avatar.jpg';
         $user->status = 'unverified';
         $user->save();
+
+        $this->mailer->sendTemplate(
+            $user->email,
+            $user->name,
+            'registration_otp',
+            [
+                'subject' => 'Verify Your OpenShelf Account',
+                'otp' => $user->otp_code,
+                'expiry_minutes' => 15,
+                'user_name' => $user->name,
+                'ip_address' => $request->ip(),
+            ],
+            $user->id,
+        );
 
         $request->session()->put('verify_email', $user->email);
 

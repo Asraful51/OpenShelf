@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\MailerService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -14,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MailerService::class);
     }
 
     /**
